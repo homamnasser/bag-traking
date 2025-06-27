@@ -29,7 +29,7 @@ class CustomerController extends Controller
         if (!$user) {
             return response()->json([
                 'message' => 'User not found'
-            ], 200);
+            ], 404);
         }
 
         if (!$user->hasRole('customer')) {
@@ -41,7 +41,7 @@ class CustomerController extends Controller
         if (!$area) {
             return response()->json([
                 'message' => 'Area not found'
-            ], 200);
+            ], 404);
         }
         $subscriptionStartDate = Carbon::now();
 
@@ -77,7 +77,7 @@ class CustomerController extends Controller
         if (!$customer) {
             return response()->json([
                 'message' => 'Customer not found',
-            ], 200);
+            ], 404);
         }
         $validator = Validator::make($request->all(), [
             'user_id' => 'exists:users,id|unique:customers,user_id',
@@ -94,7 +94,7 @@ class CustomerController extends Controller
         if (!$user) {
             return response()->json([
                 'message' => 'User not found'
-            ], 200);
+            ], 404);
         }
 
         if (!$user->hasRole('customer')) {
@@ -107,7 +107,7 @@ class CustomerController extends Controller
         if (!$area) {
             return response()->json([
                 'message' => 'Area not found'
-            ], 200);
+            ], 404  );
         }
 
         $customer->update($request->all());
@@ -134,7 +134,7 @@ class CustomerController extends Controller
             ], 200);
         }
         $validator = Validator::make($request->all(), [
-            'subscription_status' => 'required|in:0,1',
+            'subscription_status' => 'required|in:1',
 
         ]);
 
@@ -142,16 +142,39 @@ class CustomerController extends Controller
 
             return response()->json($validator->errors()->toJson(), 422);
         }
+        $newStatus = (int) $request->subscription_status;
 
-        $customer->update($request->all());
+
+        $updateData = [
+            'subscription_status' => $newStatus,
+        ];
+
+
+        if ($customer->subscription_status == 1) {
+            $newExpiryDate = $customer->subscription_expiry_date->copy()->addMonth();
+
+            $updateData['subscription_expiry_date'] = $newExpiryDate;
+        }
+        if($customer->subscription_status == 0) {
+
+            $newStartDate = Carbon::now();
+            $newExpiryDate = $newStartDate->copy()->addMonth();
+
+
+            $updateData['subscription_start_date'] = $newStartDate;
+            $updateData['subscription_expiry_date'] = $newExpiryDate;
+        }
+
+            $customer->update($updateData);
+
 
         return response()->json([
                 'message' => 'Customer updated successfully ',
                 'result' => [
                     'id'=> $customer->id,
                     'name'=> $customer->user->first_name.' '.$customer->user->last_name,
-                    'area'=> $customer->area->name,
-                    'address'=> $customer->address,
+                    'subscription_start_date' => $customer->subscription_start_date->toDateString(),
+                    'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
 
                 ]
             ]

@@ -35,6 +35,8 @@ Route::group([
 ], function ($router) {
     Route::post('/addCustomer', [CustomerController::class,'addCustomer']);
     Route::post('/updateCustomer/{id}', [CustomerController::class,'updateCustomer']);
+    Route::post('/editStatus/{id}', [CustomerController::class,'editStatus']);
+
 
 
 });
