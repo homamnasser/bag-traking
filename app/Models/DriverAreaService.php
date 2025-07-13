@@ -10,11 +10,17 @@ class DriverAreaService extends Model
     use HasFactory;
     protected $fillable=
         [
-            'name'
+            'name',
+            'driver_id',
         ];
 
     public function customers()
     {
         return $this->hasMany(DriverAreaService::class);
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(User::class);
     }
 }

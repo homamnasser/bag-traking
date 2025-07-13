@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomerFoodPreferencesController;
 use App\Http\Controllers\DriverAreaServiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,9 @@ Route::group([
         Route::post('/updateArea/{id}', [DriverAreaServiceController::class,'updateArea']);
         Route::post('/deleteArea/{id}',[DriverAreaServiceController::class,'deleteArea']);
         Route::get('/getAllAreas',[DriverAreaServiceController::class,'getAllAreas']);
+    Route::post('/getArea/{id}', [DriverAreaServiceController::class,'getArea']);
+
+
 });
 
 Route::group([
@@ -36,6 +40,27 @@ Route::group([
     Route::post('/addCustomer', [CustomerController::class,'addCustomer']);
     Route::post('/updateCustomer/{id}', [CustomerController::class,'updateCustomer']);
     Route::post('/editStatus/{id}', [CustomerController::class,'editStatus']);
+    Route::get('/getAllCustomers', [CustomerController::class,'getAllCustomers']);
+    Route::post('/getCustomerByStatus/{subscription_status}', [CustomerController::class,'getCustomerByStatus']);
+    Route::get('/getAllFoodPreferences', [CustomerFoodPreferencesController::class,'getAllFoodPreferences']);
+    Route::post('/getCustomer/{id}', [CustomerController::class,'getCustomer']);
+
+
+
+});
+
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:customer'],
+    'prefix' => 'customer'
+], function ($router) {
+    Route::post('/addFoodPrefer', [CustomerFoodPreferencesController::class,'addFoodPrefer']);
+    Route::post('/updateFoodPrefer', [CustomerFoodPreferencesController::class,'updateFoodPrefer']);
+    Route::post('/deleteFoodPrefer', [CustomerFoodPreferencesController::class,'deleteFoodPrefer']);
+    Route::post('/getCustomerFoodPreferences/{id}', [CustomerFoodPreferencesController::class,'getCustomerFoodPreferences']);
+
+
+
+
 
 
 
@@ -44,9 +69,16 @@ Route::group([
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/loginUser', [AuthController::class, 'loginUser']);
 
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin'],
+    'prefix' => 'admin'
+], function ($router) {
+    Route::post('/createUser', [AdminController::class,'createUser']);
+    Route::post('/updateUser/{id}', [AdminController::class,'updateUser']);
+    Route::post('/deleteUser/{id}', [AdminController::class,'deleteUser']);
+    Route::post('/getUser/{id}', [AdminController::class,'getUser']);
+});
 
-Route::middleware(['auth:sanctum','role:super_admin|admin'])
-    ->post('/createUser', [AdminController::class,'createUser']);
 
 Route::middleware(['auth:sanctum','role:super_admin|admin'])
     ->get('/getAllUsers', [AdminController::class,'getAllUsers']);

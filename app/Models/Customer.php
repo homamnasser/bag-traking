@@ -26,6 +26,10 @@ class Customer extends Model
     {
         return $this->belongsTo(DriverAreaService::class);
     }
+
+    public function customerFoodPreferences(){
+        return $this->hasOne(Customer_Food_Preferences::class);
+    }
     protected $casts = [
         'subscription_start_date' => 'datetime',
         'subscription_expiry_date' => 'datetime',

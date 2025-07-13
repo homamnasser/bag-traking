@@ -28,10 +28,8 @@ class CheckSubscriptionExpiry extends Command
      */
     public function handle()
     {
-        $this->info('Checking for expired subscriptions...'); // رسالة معلوماتية عند بدء التشغيل
+        $this->info('Checking for expired subscriptions...');
 
-        // جلب جميع العملاء الذين حالتهم (subscription_status) نشطة (1)
-        // وتاريخ انتهاء اشتراكهم (subscription_expiry_date) هو اليوم أو قبله.
         $expiredCustomers = Customer::where('subscription_status', 1)
             ->where('subscription_expiry_date', '<=', Carbon::today())
             ->get();
@@ -43,12 +41,12 @@ class CheckSubscriptionExpiry extends Command
 
         $count = 0;
         foreach ($expiredCustomers as $customer) {
-            $customer->subscription_status = 0; // تحديث الحالة إلى 0 (منتهية الصلاحية)
-            $customer->save(); // حفظ التغييرات في قاعدة البيانات
+            $customer->subscription_status = 0;
+            $customer->save();
             $count++;
         }
 
-        $this->info("Updated {$count} expired subscriptions."); // رسالة معلوماتية بعد التحديث
-        return Command::SUCCESS; // إنهاء الأمر بنجاح
+        $this->info("Updated {$count} expired subscriptions.");
+        return Command::SUCCESS;
     }
 }

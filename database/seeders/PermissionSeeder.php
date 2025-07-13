@@ -25,14 +25,26 @@ class PermissionSeeder extends Seeder
 
         $permissions = [
             'createUser',
+            'updateUser',
+            'deleteUser',
+            'getUser',
             'getAllUsers',
             'addArea',
             'updateArea',
             'deleteArea',
             'getAllArea',
-            'addUserDetails',
-            'updateUserDetails',
-            'updateSubscription'
+            'getArea',//
+            'addCustomer',
+            'updateCustomer',
+            'editStatus',
+            //'getAllCustomer',
+            'getCustomer',//
+            'getCustomerByStatus',
+            'addFoodPreferences',
+            'updateFoodPreferences',
+            'deleteFoodPreferences',
+            'getAllFoodPreferences',
+            'getCustomerFoodPreferences',
         ];
 
         foreach ($permissions as $permission) {

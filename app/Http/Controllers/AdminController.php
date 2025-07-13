@@ -55,6 +55,113 @@ class AdminController extends Controller
             'message' => "{$role} user created successfully.",
         ], 201);
     }
+
+    public function updateUser(Request $request ,$id)
+    {
+        $user= User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+
+
+        if ($request->role === 'admin' && !Auth::user()->hasRole('super_admin')) {
+            return response()->json([
+                'message' => 'Only super admin can update an admin user.'
+            ], 403);
+        }
+
+        $user= User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'string|max:55',
+            'last_name'  => 'string|max:55',
+            'phone'      => 'string|unique:users,phone',
+            'password'   => 'string|min:6',
+            'role'       => 'string|in:admin,admin_cook,driver,store_employee,customer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        if ($request->has('role') && $request->role === 'admin' && !Auth::user()->hasRole('super_admin')) {
+            return response()->json([
+                'message' => 'Only super admin can assign or update to the "admin" role.'
+            ], 403);
+        }
+
+        $user->update($request->all());
+
+        if ($request->has('role') && !empty($request->role)) {
+            $user->syncRoles($request->role);
+        }
+
+        $currentRole = $user->getRoleNames()->first();
+
+        return response()->json([
+            'message' => " user updated successfully.",
+            'result' => [
+                'id'=> $user->id,
+                'name'=> $user->first_name.' '.$user->last_name,
+                'phone'=> $user->phone,
+                'role'=> $currentRole,
+
+            ]
+        ], 200);
+    }
+    public function deleteUser($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+        if ($user->id === 1) {
+            return response()->json([
+                'message' => 'Cannot delete the primary system user (ID: 1).'
+            ], 403);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Uesr deleted successfully ',
+        ], 200);
+
+    }
+    public function getUser($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+        return response()->json([
+                'message' => 'This is User ',
+                'result' => [
+                    'id'=> $user->id,
+                    'name'=> $user->first_name.' '.$user->last_name,
+                    'phone'=> $user->phone,
+                    'role'=> $user->getRoleNames()->first(),
+                ]
+            ]
+            , 201);
+    }
+
+
     public function getAllUsers()
     {
         $users = User::all();
@@ -75,7 +182,8 @@ class AdminController extends Controller
 
         return response()->json([
             'message' => 'All users retrieved successfully.',
-            'data' => $allUsers,
+            'result' => $allUsers,
         ], 200);
     }
+
 }

@@ -134,7 +134,7 @@ class CustomerController extends Controller
             ], 200);
         }
         $validator = Validator::make($request->all(), [
-            'subscription_status' => 'required|in:1',
+            'subscription_status' => 'required|in:0,1',
 
         ]);
 
@@ -149,24 +149,23 @@ class CustomerController extends Controller
             'subscription_status' => $newStatus,
         ];
 
+        if($request->subscription_status == 1) {
+            if ($customer->subscription_status == 1) {
+                $newExpiryDate = $customer->subscription_expiry_date->copy()->addMonth();
 
-        if ($customer->subscription_status == 1) {
-            $newExpiryDate = $customer->subscription_expiry_date->copy()->addMonth();
+                $updateData['subscription_expiry_date'] = $newExpiryDate;
+            }
+            if ($customer->subscription_status == 0) {
 
-            $updateData['subscription_expiry_date'] = $newExpiryDate;
+                $newStartDate = Carbon::now();
+                $newExpiryDate = $newStartDate->copy()->addMonth();
+
+
+                $updateData['subscription_start_date'] = $newStartDate;
+                $updateData['subscription_expiry_date'] = $newExpiryDate;
+            }
         }
-        if($customer->subscription_status == 0) {
-
-            $newStartDate = Carbon::now();
-            $newExpiryDate = $newStartDate->copy()->addMonth();
-
-
-            $updateData['subscription_start_date'] = $newStartDate;
-            $updateData['subscription_expiry_date'] = $newExpiryDate;
-        }
-
             $customer->update($updateData);
-
 
         return response()->json([
                 'message' => 'Customer updated successfully ',
@@ -175,9 +174,90 @@ class CustomerController extends Controller
                     'name'=> $customer->user->first_name.' '.$customer->user->last_name,
                     'subscription_start_date' => $customer->subscription_start_date->toDateString(),
                     'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
-
                 ]
             ]
             , 200);
+    }
+    public function getAllCustomers(Request $request)
+    {
+        $customers = Customer::all();
+
+        if ($customers->isEmpty()) {
+            return response()->json([
+                'message' => 'No Customers found.',
+            ], 404);
+        }
+
+        $allCustomer = $customers->map(function ($customer) {
+            return [
+                'id' => $customer->id,
+                'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+                'area' => $customer->area->name,
+                'address' => $customer->address,
+                'subscription_start_date' => $customer->subscription_start_date->toDateString(),
+                'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
+                'subscription_status' => $customer->subscription_status,
+
+            ];
+        });
+
+        return response()->json([
+            'message' => 'All customers retrieved successfully.',
+            'result' => $allCustomer,
+        ], 200);
+    }
+
+        public function getCustomerByStatus($subscription_status){
+        if ($subscription_status == "all") {
+            $customers = Customer::all();
+        }
+        else{
+            $customers = Customer::where('subscription_status', $subscription_status)->get();
+        if ($customers->isEmpty()) {
+            return response()->json([
+                'message' => 'No Customers found.',
+            ], 404);
+        }
+}
+        $allCustomer = $customers->map(function ($customer) {
+            return [
+                'id' => $customer->id,
+                'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+                'area' => $customer->area->name,
+                'address' => $customer->address,
+                'subscription_start_date' => $customer->subscription_start_date->toDateString(),
+                'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
+                'subscription_status' => $customer->subscription_status,
+
+            ];
+        });
+
+            return response()->json([
+                'message' => 'Customers by Status ',
+                'result' => $allCustomer,
+            ], 200);
+        }
+    public function getCustomer($id)
+    {
+        $customer = Customer::find($id);
+
+        if (!$customer) {
+            return response()->json([
+                'message' => 'Customer not found',
+            ], 404);
+        }
+        return response()->json([
+                'message' => 'This is Customer ',
+                'result' => [
+                    'id' => $customer->id,
+                    'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+                    'area' => $customer->area->name,
+                    'address' => $customer->address,
+                    'subscription_start_date' => $customer->subscription_start_date->toDateString(),
+                    'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
+                    'subscription_status' => $customer->subscription_status,
+                ]
+            ]
+            , 201);
     }
 }

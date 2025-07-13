@@ -16,30 +16,46 @@ class RoleSeeder extends Seeder
         $super_admin=Role::create(['name' => 'super_admin']);
         $super_admin->givePermissionTo([
             'createUser',
+            'updateUser',
+            'deleteUser',
+            'getUser',
+            'getAllUsers',
             'addArea',
             'updateArea',
             'deleteArea',
             'getAllArea',
-            'addUserDetails',
-            'updateUserDetails',
-            'updateSubscription',
-            'getAllUsers'
+            'getArea',
+            'addCustomer',
+            'updateCustomer',
+            'editStatus',
+           // 'getAllCustomer',
+            'getCustomer',
+            'getCustomerByStatus',
+            'getAllFoodPreferences',
+
+
 
 
         ]);
         $admin=Role::create(['name' => 'admin']);
         $admin->givePermissionTo([
             'createUser',
+            'updateUser',
+            'deleteUser',
+            'getUser',
+            'getAllUsers',
             'addArea',
             'updateArea',
             'deleteArea',
             'getAllArea',
-            'addUserDetails',
-            'updateUserDetails',
-            'updateSubscription',
-            'getAllUsers'
-
-
+            'getArea',
+            'addCustomer',
+            'updateCustomer',
+            'editStatus',
+            //'getAllCustomer',
+            'getCustomer',
+            'getCustomerByStatus',
+            'getAllFoodPreferences',
         ]);
 
        $driver= Role::create(['name' => 'driver']);
@@ -58,6 +74,10 @@ class RoleSeeder extends Seeder
 
        $customer= Role::create(['name' => 'customer']);
         $customer->givePermissionTo([
+            'addFoodPreferences',
+            'updateFoodPreferences',
+            'deleteFoodPreferences',
+            'getCustomerFoodPreferences'
 
         ]);
 
