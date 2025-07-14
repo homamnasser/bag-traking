@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerFoodPreferencesController;
 use App\Http\Controllers\DriverAreaServiceController;
+use App\Http\Controllers\MealController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,8 +28,8 @@ Route::group([
         Route::post('/addArea', [DriverAreaServiceController::class,'addArea']);
         Route::post('/updateArea/{id}', [DriverAreaServiceController::class,'updateArea']);
         Route::post('/deleteArea/{id}',[DriverAreaServiceController::class,'deleteArea']);
-        Route::get('/getAllAreas',[DriverAreaServiceController::class,'getAllAreas']);
-    Route::post('/getArea/{id}', [DriverAreaServiceController::class,'getArea']);
+        Route::post('/getAllAreas/{request}',[DriverAreaServiceController::class,'getAllAreas']);
+        Route::post('/getArea/{id}', [DriverAreaServiceController::class,'getArea']);
 
 
 });
@@ -79,6 +80,23 @@ Route::group([
     Route::post('/getUser/{id}', [AdminController::class,'getUser']);
 });
 
+
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:admin_cook'],
+    'prefix' => 'meal'
+], function ($router) {
+    Route::post('/addMeal', [MealController::class,'addMeal']);
+    Route::post('/updateMeal/{id}', [MealController::class,'updateMeal']);
+    Route::post('/deleteMeal/{id}', [MealController::class,'deleteMeal']);
+    Route::post('/getMeal/{id}', [MealController::class,'getMeal']);
+    Route::post('/updatePhoto/{id}', [MealController::class,'updatePhoto']);
+    Route::post('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
+
+
+
+
+
+});
 
 Route::middleware(['auth:sanctum','role:super_admin|admin'])
     ->get('/getAllUsers', [AdminController::class,'getAllUsers']);

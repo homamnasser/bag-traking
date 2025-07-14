@@ -64,7 +64,12 @@ class RoleSeeder extends Seeder
        ]);
        $admin_cook= Role::create(['name' => 'admin_cook']);
        $admin_cook->givePermissionTo([
-
+           'addMeal',
+           'updateMeal',
+           'deleteMeal',
+           'getMeal',
+           'getAllMeal',//search
+           'updatePhoto'
        ]);
 
        $store_employee= Role::create(['name' => 'store_employee']);

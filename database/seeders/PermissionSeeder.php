@@ -43,8 +43,15 @@ class PermissionSeeder extends Seeder
             'addFoodPreferences',
             'updateFoodPreferences',
             'deleteFoodPreferences',
-            'getAllFoodPreferences',
+            'getAllFoodPreferences',//اذا بدهم ياه بحث حسب اسم المستخدم
             'getCustomerFoodPreferences',
+            'addMeal',
+            'updateMeal',
+            'deleteMeal',
+            'getMeal',
+            'getAllMeal',//search
+            'updatePhoto'
+
         ];
 
         foreach ($permissions as $permission) {

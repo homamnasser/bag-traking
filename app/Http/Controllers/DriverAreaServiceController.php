@@ -106,18 +106,29 @@ class DriverAreaServiceController extends Controller
         ], 200);
 
     }
-
-    public function getAllAreas()
+//By All Or Name Or Driver
+    public function getAllAreas($request)
     {
         $areas = [];
 
-        $data = DriverAreaService::all();
+        if ( $request == "all") {
+            $data = DriverAreaService::all();
+        }
+        else
+        {
+            $data = DriverAreaService::where('name', 'like', '%' . $request . '%')
+                ->orWhereHas('driver', function ($query) use ($request) {
+                    $query->where('first_name', 'like', '%' . $request . '%')
+                        ->orWhere('last_name', 'like', '%' . $request . '%');
+                })
+                ->get();
+
+        }
         foreach ($data as $data1) {
 
             array_push($areas, [
                 'id'=>$data1->id,
                 'name' => $data1->name,
-                'driver_id' => $data1->driver_id,
                 'diver_name' => $data1->driver->first_name . ' ' . $data1->driver->last_name,
             ]);
         }
