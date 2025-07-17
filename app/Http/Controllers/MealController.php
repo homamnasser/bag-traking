@@ -40,6 +40,7 @@ class MealController extends Controller
 
 
         return response()->json([
+            'code' => 201,
             'message' => 'Meal added successfully ',
             'result' => [
                 'id' => $meal->id,
@@ -79,6 +80,7 @@ class MealController extends Controller
         $meal->update($request->all());
 
         return response()->json([
+                'code' => 200,
                 'message' => 'Meal updated successfully ',
                 'result' => [
                     'id' => $meal->id,
@@ -107,6 +109,7 @@ class MealController extends Controller
         $meal->delete();
 
         return response()->json([
+            'code' => 200,
             'message' => 'Meal deleted successfully ',
         ], 200);
 
@@ -122,6 +125,7 @@ class MealController extends Controller
             ], 404);
         }
         return response()->json([
+                'code' => 200,
                 'message' => 'This is Meal ',
                 'result' => [
                     'id' => $meal->id,
@@ -134,7 +138,7 @@ class MealController extends Controller
 
                 ]
             ]
-            , 201);
+            , 200);
     }
 //name ingre is_active Type
 
@@ -174,6 +178,7 @@ class MealController extends Controller
             ], 200);
         }
         return response()->json([
+                'code' => 200,
                 'message' => 'Meals',
                 'result' => [
                     'meal' => $allMeals,
@@ -204,12 +209,12 @@ class MealController extends Controller
             'imgs'=>$images
         ]);
         return response()->json([
-                'code' => '0',
+                'code' => 200,
                 'message' => 'Updated photo',
                 'result' => [
                     'imgs' =>json_decode($images) ,
                 ]
             ]
-            , 201);
+            , 200);
     }
 }

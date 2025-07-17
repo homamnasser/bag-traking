@@ -18,6 +18,9 @@ class Customer_Food_Preferences extends Model
             'daily_calorie_needs',
 
         ];
+    public function customer(){
+        return $this->belongsTo(Customer::class);
+    }
 
 
 }

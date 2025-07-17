@@ -43,6 +43,7 @@ class DriverAreaServiceController extends Controller
         ]);
 
         return response()->json([
+                'code' => 201,
                 'message' => 'area added successfully ',
                 'result' => [
                     'id'=>$area->id,
@@ -77,6 +78,7 @@ class DriverAreaServiceController extends Controller
         $area->update($request->all());
 
         return response()->json([
+                'code' => 200,
                 'message' => 'Area updated successfully ',
                 'result' => [
                     'id'=>$area->id,
@@ -102,6 +104,7 @@ class DriverAreaServiceController extends Controller
         $area->delete();
 
         return response()->json([
+            'code' => 200,
             'message' => 'Area deleted successfully ',
         ], 200);
 
@@ -116,10 +119,10 @@ class DriverAreaServiceController extends Controller
         }
         else
         {
-            $data = DriverAreaService::where('name', 'like', '%' . $request . '%')
+            $data = DriverAreaService::where('name', $request)
                 ->orWhereHas('driver', function ($query) use ($request) {
-                    $query->where('first_name', 'like', '%' . $request . '%')
-                        ->orWhere('last_name', 'like', '%' . $request . '%');
+                    $query->where('first_name',  $request )
+                        ->orWhere('last_name',  $request);
                 })
                 ->get();
 
@@ -139,6 +142,7 @@ class DriverAreaServiceController extends Controller
             ], 200);
         }
         return response()->json([
+                'code' => 200,
                 'message' => 'All Areas',
                 'result' => [
                     'area' => $areas,
@@ -156,6 +160,7 @@ class DriverAreaServiceController extends Controller
             ], 404);
         }
         return response()->json([
+                'code' => 200,
                 'message' => 'This is Area ',
                 'result' => [
                     'id'=>$area->id,
@@ -163,7 +168,7 @@ class DriverAreaServiceController extends Controller
                     'diver_name' => $area->driver->first_name . ' ' . $area->driver->last_name,
                 ]
             ]
-            , 201);
+            , 200);
     }
 
 }

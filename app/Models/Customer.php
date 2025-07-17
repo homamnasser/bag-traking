@@ -21,7 +21,9 @@ class Customer extends Model
     public function user(){
         return $this->belongsTo(User::class);
     }
-
+    public function prefrence(){
+        return $this->hasOne(Customer_Food_Preferences::class);
+    }
     public function area()
     {
         return $this->belongsTo(DriverAreaService::class);

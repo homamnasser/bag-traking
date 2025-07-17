@@ -41,9 +41,9 @@ class AuthController extends Controller
         $token = $user->createToken("API TOKEN")->plainTextToken;
 
         return response()->json([
-            'status' => 1,
+            'code' => 201,
             'message' => ' super admin register successfully',
-            'data' => array_merge($userData, ['role' => $role],['token'=>$token])
+            'result' => array_merge($userData, ['role' => $role],['token'=>$token])
         ]);
     }
 
@@ -71,10 +71,10 @@ class AuthController extends Controller
         $role=$user->getRoleNames()->first();
 
         return response()->json([
-            'status' => 1,
+            'code' => 200,
             'message' => 'user login successfully',
-            'data' =>array_merge($userData, ['role' => $role],['token'=>$token])
-        ]);
+            'result' =>array_merge($userData, ['role' => $role],['token'=>$token])
+        ],200);
     }
 
 }

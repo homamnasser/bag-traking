@@ -61,6 +61,7 @@ class CustomerFoodPreferencesController extends Controller
         ]);
 
         return response()->json([
+            'code' => 201,
             'message' => 'Customer food preference added successfully.',
             'result' => [
                 'id'                  => $foodPrefer->id,
@@ -123,6 +124,7 @@ class CustomerFoodPreferencesController extends Controller
 
 
         return response()->json([
+            'code' => 200,
             'message' => 'Customer food preference updated successfully.',
             'result' => [
                 'id'                  => $foodPrefer->id,
@@ -165,6 +167,7 @@ class CustomerFoodPreferencesController extends Controller
         $foodPrefer->delete();
 
         return response()->json([
+            'code' => 200,
             'message' => 'Prefer deleted successfully ',
         ], 200);
     }
@@ -194,6 +197,7 @@ class CustomerFoodPreferencesController extends Controller
         });
 
         return response()->json([
+            'code' => 200,
             'message' => 'All Food Prefer retrieved successfully.',
             'result' =>$allPreferFoods ,
         ], 200);
@@ -229,6 +233,7 @@ class CustomerFoodPreferencesController extends Controller
 
 
         return response()->json([
+            'code' => 200,
             'message' => 'Food Prefer retrieved successfully.',
             'result' =>
             [

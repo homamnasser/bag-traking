@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Customer_Food_Preferences;
 use App\Models\DriverAreaService;
 use App\Models\User;
 use Carbon\Carbon;
@@ -57,6 +58,7 @@ class CustomerController extends Controller
         ]);
 
         return response()->json([
+            'code' => 201,
             'message' => 'Customer  added successfully ',
             'result' => [
 
@@ -113,6 +115,7 @@ class CustomerController extends Controller
         $customer->update($request->all());
 
         return response()->json([
+                'code' => 200,
                 'message' => 'Customer updated successfully ',
                 'result' => [
                     'id'=> $customer->id,
@@ -168,6 +171,7 @@ class CustomerController extends Controller
             $customer->update($updateData);
 
         return response()->json([
+                'code' => 200,
                 'message' => 'Customer updated successfully ',
                 'result' => [
                     'id'=> $customer->id,
@@ -178,41 +182,14 @@ class CustomerController extends Controller
             ]
             , 200);
     }
-    public function getAllCustomers(Request $request)
-    {
-        $customers = Customer::all();
 
-        if ($customers->isEmpty()) {
-            return response()->json([
-                'message' => 'No Customers found.',
-            ], 404);
-        }
 
-        $allCustomer = $customers->map(function ($customer) {
-            return [
-                'id' => $customer->id,
-                'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
-                'area' => $customer->area->name,
-                'address' => $customer->address,
-                'subscription_start_date' => $customer->subscription_start_date->toDateString(),
-                'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
-                'subscription_status' => $customer->subscription_status,
-
-            ];
-        });
-
-        return response()->json([
-            'message' => 'All customers retrieved successfully.',
-            'result' => $allCustomer,
-        ], 200);
-    }
-
-        public function getCustomerByStatus($subscription_status){
-        if ($subscription_status == "all") {
+        public function getCustomerByStatus($request){
+        if ($request == "all") {
             $customers = Customer::all();
         }
         else{
-            $customers = Customer::where('subscription_status', $subscription_status)->get();
+            $customers = Customer::where('subscription_status', $request)->get();
         if ($customers->isEmpty()) {
             return response()->json([
                 'message' => 'No Customers found.',
@@ -246,18 +223,32 @@ class CustomerController extends Controller
                 'message' => 'Customer not found',
             ], 404);
         }
+
+        $customerMap = [
+            'id' => $customer->id,
+            'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+            'area' => $customer->area->name,
+            'address' => $customer->address,
+            'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
+            'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
+            'subscription_status' => $customer->subscription_status,
+//            'foodPreferences'=>[
+//                'preferred_food_type' => $customer->prefrence->preferred_food_type,
+//                'allergies'           => $customer->prefrence->allergies,
+//                'health_conditions'   => $customer->prefrence->health_conditions,
+//                'dietary_system'      => $customer->prefrence->dietary_system,
+//                'daily_calorie_needs' => $customer->prefrence->daily_calorie_needs,
+//                ]
+
+        ];
+
+
         return response()->json([
-                'message' => 'This is Customer ',
-                'result' => [
-                    'id' => $customer->id,
-                    'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
-                    'area' => $customer->area->name,
-                    'address' => $customer->address,
-                    'subscription_start_date' => $customer->subscription_start_date->toDateString(),
-                    'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
-                    'subscription_status' => $customer->subscription_status,
-                ]
+            'code' => 200,
+            'message' => 'This is Customer',
+            'result' => [
+                'customer' => $customerMap,
             ]
-            , 201);
+        ], 200);
     }
 }

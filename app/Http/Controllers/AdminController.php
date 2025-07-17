@@ -52,7 +52,16 @@ class AdminController extends Controller
         $role = $user->getRoleNames()->first();
 
         return response()->json([
+            'code'=> 201 ,
             'message' => "{$role} user created successfully.",
+            'result' => [
+                'id'=> $user->id,
+                'name'=> $user->first_name.' '.$user->last_name,
+                'phone'=> $user->phone,
+                'role'=> $role,
+
+            ]
+
         ], 201);
     }
 
@@ -108,6 +117,7 @@ class AdminController extends Controller
         $currentRole = $user->getRoleNames()->first();
 
         return response()->json([
+            'code'=> 200,
             'message' => " user updated successfully.",
             'result' => [
                 'id'=> $user->id,
@@ -136,6 +146,7 @@ class AdminController extends Controller
         $user->delete();
 
         return response()->json([
+            'code'=> 200 ,
             'message' => 'Uesr deleted successfully ',
         ], 200);
 
@@ -150,6 +161,7 @@ class AdminController extends Controller
             ], 404);
         }
         return response()->json([
+                'code'=> 200,
                 'message' => 'This is User ',
                 'result' => [
                     'id'=> $user->id,
@@ -158,14 +170,26 @@ class AdminController extends Controller
                     'role'=> $user->getRoleNames()->first(),
                 ]
             ]
-            , 201);
+            , 200);
     }
 
-
-    public function getAllUsers()
+//first/last name phone role
+    public function getAllUsers($request)
     {
-        $users = User::all();
+        if ($request == "all") {
+            $users = User::all();
 
+        }
+        else
+        {
+            $users = User::where('phone',  $request)
+            ->orWhere('first_name', $request )
+            ->orWhere('last_name',  $request )
+            ->orWhereHas('roles', function ($query) use ($request) {
+             $query->where('name',  $request );
+        })
+        ->get();
+        }
         if ($users->isEmpty()) {
             return response()->json([
                 'message' => 'No users found.',
@@ -176,12 +200,14 @@ class AdminController extends Controller
             return [
                 'id' => $user->id,
                 'full_name' => $user->first_name . ' ' . $user->last_name,
-                'role'=>$user->getRoleNames()->first(),
+                'phone' => $user->phone,
+                'role' => $user->getRoleNames()->first(),
             ];
         });
 
         return response()->json([
-            'message' => 'All users retrieved successfully.',
+            'code'=> 200,
+            'message' => 'Users retrieved successfully.',
             'result' => $allUsers,
         ], 200);
     }
