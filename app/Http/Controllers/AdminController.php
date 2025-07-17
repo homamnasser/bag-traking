@@ -31,7 +31,7 @@ class AdminController extends Controller
             'first_name' => 'required|string|max:55',
             'last_name'  => 'required|string|max:55',
             'phone'      => 'required|string|unique:users,phone',
-            'password'   => 'required|string|min:6',
+            'password'   => 'required|string|min:6|confirmed',
             'role'       => 'required|string|in:admin,admin_cook,driver,store_employee,customer',
         ]);
 
@@ -94,7 +94,7 @@ class AdminController extends Controller
             'first_name' => 'string|max:55',
             'last_name'  => 'string|max:55',
             'phone'      => 'string|unique:users,phone',
-            'password'   => 'string|min:6',
+            'password'   => 'string|min:6|confirmed',
             'role'       => 'string|in:admin,admin_cook,driver,store_employee,customer',
         ]);
 
