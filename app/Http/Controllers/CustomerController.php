@@ -246,7 +246,7 @@ class CustomerController extends Controller
         return response()->json([
                 'code' => 200,
                 'message' => 'Customer updated successfully ',
-                'result' => [
+                'data' => [
                     'id'=> $customer->id,
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'phone' => $user->phone,
@@ -266,8 +266,9 @@ class CustomerController extends Controller
 
         if (!$customer) {
             return response()->json([
+                'code'=>200,
                 'message' => 'Customer not found',
-            ], 200);
+            ]);
         }
         $validator = Validator::make($request->all(), [
             'subscription_status' => 'required|in:0,1',
@@ -352,7 +353,7 @@ class CustomerController extends Controller
         }
     public function getCustomer($id)
     {
-        $customer = Customer::find($id);
+        $customer = Customer::with('user', 'area.driver')->find($id);;
 
         if (!$customer) {
             return response()->json([
@@ -364,7 +365,7 @@ class CustomerController extends Controller
         $customerMap = [
             'id' => $customer->id,
             'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
-            'driverName' => $customer->area->driver_id->name,                              ///////////////
+            'driverName' => $customer->area->driver->first_name.''.$customer->area->driver->last_name,                              ///////////////
             'address' => $customer->address,
             'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
             'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
