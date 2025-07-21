@@ -3,47 +3,68 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Traits\PhotoTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        $superAdminExists = Role::where('name','super_admin')->first()
-            ? User::role('super_admin')->exists()
-             : false;
-
-        if ($superAdminExists) {
-            return response()->json([
-                'message' => 'Super Admin already exists.',
-            ], 403);
-        }
-
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'first_name' => ['required', 'max:55'],
             'last_name' => ['required', 'max:55'],
-            'password' => ['required','min:6|confirmed'],
-            'phone' => ['unique:users,phone','phone:AUTO', 'required'],
+            'password' => ['required','min:6','confirmed'],
+            'phone' => ['required', 'unique:users,phone', 'regex:/^\+9715[0,2-8]\d{7}$/'],
+            'role' => ['required','in:driver,store_employee'],
+            'image.*' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
 
-        ]);
+        ],[
+            'phone.unique' => 'the phone already exist',
+            'phone.regex' =>'please enter a valid United Arab Emirates phone number' ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ]);}
+
+
+        $role = $request->role;
+        $images = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $fileName = 'images/' . 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            Storage::disk('public')->put($fileName, file_get_contents($file));
+            $image = 'storage/' . $fileName;
+            $images=asset($image);
+        }
+
         $user =User::query()->create([
             'first_name' => $request['first_name'],
             'last_name' => $request['last_name'],
             'phone' => $request['phone'],
             'password' => Hash::make($request['password']),
+            'image' =>$images,
+            'is_active'=>false
         ]);
-        $user->assignRole('super_admin');
-        $userData = $user->toArray();
-        $role=$user->getRoleNames()->first();
-        $token = $user->createToken("API TOKEN")->plainTextToken;
+           $user->assignRole($role);
 
+        MessageController::createAccountRequestMessage([
+            'user_id'    =>$user->id,
+            'role'       => $request->role,
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
+            'phone'      => $request->phone,
+            'password'   => $request->password,
+        ]);
         return response()->json([
-            'code' => 201,
-            'message' => ' super admin register successfully',
-            'result' => array_merge($userData, ['role' => $role],['token'=>$token])
+            'code'=>200,
+            'message' => 'Your account creation request has been submitted  to the restaurant management and is pending approval.',
         ]);
     }
 
@@ -51,20 +72,30 @@ class AuthController extends Controller
     public function loginUser(Request $request)
     {
         $request->validate([
-            'phone' => ['required','phone:AUTO','exists:users,phone'],
+            'phone' => ['required'],
             'password' => ['required','min:6'],
         ]);
+
         $user = User::query()->where('phone', $request->phone)
             ->first();
-
+        if (!$user) {
+            return response()->json([
+                'code' => 404,
+                'message' => 'The phone is incorrect'
+            ]);}
 
         if (!Auth::attempt($request->only(['phone', 'password']))) {
             return response()->json([
-                'data' => [],
-                'status' =>0 ,
+                'code' =>401 ,
                 'message' => 'The password is incorrect'
-            ],401);
+            ]);
         }
+         if(!$user->is_active) {
+             return response()->json([
+                 'code' => 401,
+                 'message' => 'The account is not activated yet. Please contact the restaurant management if there is an issue.'
+             ]);
+         }
 
         $token = $user->createToken('API TOKEN')->plainTextToken;
         $userData = $user->toArray();
@@ -73,8 +104,8 @@ class AuthController extends Controller
         return response()->json([
             'code' => 200,
             'message' => 'user login successfully',
-            'result' =>array_merge($userData, ['role' => $role],['token'=>$token])
-        ],200);
+            'data' =>array_merge($userData, ['role' => $role],['token'=>$token])
+        ]);
     }
 
 }

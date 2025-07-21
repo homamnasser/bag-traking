@@ -22,6 +22,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_name',
         'phone',
         'password',
+        'image',
+        'is_active'
 
     ];
 
@@ -43,6 +45,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
        // 'email_verified_at' => 'datetime',    //تحوله لوقت وتاريخ
         'phone_verified_at'=> 'datetime',
+        'is_active' => 'boolean',
     ];
 
     public function customer(){
@@ -53,7 +56,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(DriverAreaService::class);
     }
 
-
+    public function message(){
+        return $this->hasMany(Message::class);
+    }
 
 
 

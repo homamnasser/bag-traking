@@ -32,6 +32,7 @@ class CreateSuperAdmin extends Seeder
                 'phone' => '+963938316303', // استخدم رقم هاتف فريد لهذا المستخدم
                 'password' => Hash::make('123456789'), // كلمة مرور قوية لأغراض الإنتاج!
                 'phone_verified_at' => now(), // يمكنك تعيينه كـ verified مباشرةً
+                'is_active'=>true
             ]
         );
         $user->assignRole('super_admin');

@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BagController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerFoodPreferencesController;
 use App\Http\Controllers\DriverAreaServiceController;
+use App\Http\Controllers\DriverController;
 use App\Http\Controllers\MealController;
+use App\Http\Controllers\MessageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +38,14 @@ Route::group([
 });
 
 Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:driver|store_employee|admin_cook'],
+], function ($router) {
+    Route::post('/forgetPassword', [DriverController::class,'forgetPassword']);
+});
+
+
+
+Route::group([
     'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin'],
     'prefix' => 'customer'
 ], function ($router) {
@@ -49,6 +60,7 @@ Route::group([
 
 });
 
+
 Route::group([
     'middleware' => ['api', 'auth:sanctum', 'role:customer'],
     'prefix' => 'customer'
@@ -60,14 +72,14 @@ Route::group([
 
 
 
-
-
-
-
 });
+
+
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/loginUser', [AuthController::class, 'loginUser']);
+
+
 
 Route::group([
     'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin'],
@@ -79,6 +91,9 @@ Route::group([
     Route::get('/getUser/{id}', [AdminController::class,'getUser']);
     Route::get('/getAllUsers/{request}', [AdminController::class,'getAllUsers']);
 
+    Route::get('/getMessage/{id}', [MessageController::class,'getMessage']);
+    Route::get('/getAllMessages', [MessageController::class,'getAllMessages']);
+    Route::get('/getMessageByType/{type}', [MessageController::class,'getMessageByType']);
 });
 
 
@@ -93,11 +108,27 @@ Route::group([
     Route::post('/updatePhoto/{id}', [MealController::class,'updatePhoto']);
     Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
 
+});
 
+    Route::group([
+        'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin'],
+        'prefix' => 'bag'
+    ], function ($router) {
+        Route::post('/addBag', [BagController::class,'addBag']);
+        Route::delete('/deleteBag/{id}',[BagController::class,'deleteBag']);
+        Route::get('/getAllBags',[BagController::class,'getAllBags']);
+        Route::get('/getBagByStatus/{status}', [BagController::class,'getBagsByStatus']);
+        Route::get('/searchBagById/{id}', [BagController::class,'searchBagById']);
+    });
 
-
+Route::group([
+    'middleware' => ['api', 'auth:sanctum','role:driver|store_employee|customer'],
+    'prefix' => 'message'
+], function ($router) {
+    Route::post('/sendMessage', [MessageController::class,'sendMessage']);
 
 });
+
 
 Route::middleware(['auth:sanctum','role:super_admin|admin'])
     ->get('/getAllUsers', [AdminController::class,'getAllUsers']);

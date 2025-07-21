@@ -2,54 +2,102 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bag;
 use App\Models\Customer;
-use App\Models\Customer_Food_Preferences;
 use App\Models\DriverAreaService;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CustomerController extends Controller
 {
+
+    private function generateBagQr(Bag $bag, User $user, Customer $customer)
+    {
+        $qrContent = url('/api/bag') . '?bag_id=' . $bag->bag_id .
+            '&first_name=' . urlencode($user->first_name) .
+            '&last_name=' . urlencode($user->last_name);
+
+        $fileName = 'qr_codes/bag_' . $bag->bag_id . '.svg';
+        $qrImage = QrCode::format('svg')->size(300)->generate($qrContent);
+        Storage::disk('public')->put($fileName, $qrImage);
+
+        $bag->update([
+            'qr_code_path' => $fileName,
+            'customer_id' => $customer->id,
+            'status' => 'unavailable',
+        ]);
+
+        return asset('storage/' . $fileName);
+    }
+
     public function addCustomer(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id|unique:customers,user_id',
+            'first_name' => 'required|string|max:55',
+            'last_name' => 'required|string|max:55',
+            'phone' =>  ['required', 'string', 'unique:users,phone', 'regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
+            'password' => 'required|string|min:6|confirmed',
+            'email'=> 'required|email|unique:users,email',
+            'image' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
             'area_id' => 'required|exists:driver_area_services,id',
             'address' => 'required|string',
             'subscription_status' => 'required|in:0,1',
 
-        ]);
+        ],['phone.unique' => 'the phone already exist',
+            'phone.regex' =>'please enter a valid  phone number' ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors()->toJson(), 422);
-        }
-        $user = User::find($request->user_id);
-        if (!$user) {
             return response()->json([
-                'message' => 'User not found'
-            ], 404);
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ]);}
+
+        $images = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $fileName = 'images/' . 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            Storage::disk('public')->put($fileName, file_get_contents($file));
+            $image = 'storage/' . $fileName;
+            $images=asset($image);
         }
 
-        if (!$user->hasRole('customer')) {
-            return response()->json([
-                'message' => 'The assigned user does not have the "customer" role.'
-            ], 200);
-        }
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'email'=>$request->email,
+            'image' =>$images,
+            'is_active'=>true
+        ]);
+
+        $user->assignRole('customer');
+
         $area = DriverAreaService::find($request->area_id);
         if (!$area) {
             return response()->json([
                 'message' => 'Area not found'
             ], 404);
         }
+
+        $bags = Bag::where('status', 'available')->take(2)->get();
+        if ($bags->count() < 2) {
+            return response()->json([
+                'code' => 422,
+                'message' => 'Not enough available bags to assign to this customer.']);
+        }
+
         $subscriptionStartDate = Carbon::now();
 
         $subscriptionExpiryDate = $subscriptionStartDate->copy()->addMonth();
 
         $customer = Customer::create([
-            'user_id' => $request->user_id,
+            'user_id' => $user->id,
             'area_id' => $request->area_id,
             'address' => $request->address,
             'subscription_start_date' => $subscriptionStartDate,
@@ -57,60 +105,141 @@ class CustomerController extends Controller
             'subscription_status'=>$request->subscription_status
         ]);
 
+        $qrUrls = [];
+        foreach ($bags as $bag) {
+            $qrUrls[] = $this->generateBagQr($bag, $user, $customer);
+        }
+
         return response()->json([
             'code' => 201,
             'message' => 'Customer  added successfully ',
-            'result' => [
+            'data' => [
 
                     'id'=> $customer->id,
-                    'name'=> $customer->user->first_name.' '.$customer->user->last_name,
+                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'phone' => $user->phone,
+                    'email'=>$request->email,
+                    'role' => 'customer',
                     'area'=> $customer->area->name,
                     'address'=> $customer->address,
                     'subscription_start_date' => $customer->subscription_start_date->toDateString(),
                     'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
-                    'subscription_status'=> $customer->subscription_status
+                    'subscription_status'=> $customer->subscription_status,
+                    'bags_assigned' => $bags->pluck('bag_id'),
+                    'qr_urls' => $qrUrls
                 ]
-            ], 201);
+            ]);
     }
     public function updateCustomer(Request $request, $id)
     {
-        $customer= Customer::find($id);
+        $customer = Customer::find($id);
 
         if (!$customer) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Customer not found',
-            ], 404);
+                'data'=>[]
+            ]);
         }
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'exists:users,id|unique:customers,user_id',
-            'area_id' => 'exists:driver_area_services,id',
-            'address' => 'string'
-        ]);
 
-        if ($validator->fails()) {
-
-            return response()->json($validator->errors()->toJson(), 422);
-        }
-        $user = User::find($request->user_id);
+        $user = $customer->user;
 
         if (!$user) {
             return response()->json([
-                'message' => 'User not found'
-            ], 404);
+                'code'=>404,
+                'message' => 'User not found',
+                'data'=>[]
+            ]);
         }
 
-        if (!$user->hasRole('customer')) {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'string|max:55',
+            'last_name'  => 'string|max:55',
+            'phone' => [ 'string', 'unique:users,phone', 'regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
+            'email'=> 'email|unique:users,email',
+            'is_active'  => 'boolean',
+            'password'   => 'string|min:6|confirmed',
+            'image' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
+            'area_id' => 'exists:driver_area_services,id',
+            'address' => 'string',
+            'old_bag_id' => 'exists:bags,bag_id'
+            ],[
+                'phone.unique' => 'the phone already exist',
+                'phone.regex' =>'please enter a valid  phone number' ]);
+
+        if ($validator->fails()) {
             return response()->json([
-                'message' => 'The assigned user does not have the "customer" role.'
-            ], 200);
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ]);}
+
+
+        $dataToUpdate = $request->only(['first_name', 'last_name', 'phone','email','is_active']);
+
+        if ($request->filled('password')) {
+            $dataToUpdate['password'] = Hash::make($request->password);
         }
 
-        $area = DriverAreaService::find($request->area_id);
-        if (!$area) {
-            return response()->json([
-                'message' => 'Area not found'
-            ], 404  );
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $fileName = 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('images', $fileName, 'public');
+            $images = asset('storage/' . $path);
+            $dataToUpdate['image'] = $images;
+        } else {
+            $dataToUpdate['image'] = null;
         }
+
+        $user->update($dataToUpdate);
+
+        if ($request->has('area_id')) {
+            $area = DriverAreaService::find($request->area_id);
+            if (!$area) {
+                return response()->json([
+                    'code'=>404,
+                    'message' => 'Area not found',
+                    'data'=>[]
+                ]);
+            }
+            $customer->area_id = $request->area_id;
+        }
+
+        if ($request->filled('address')) {
+            $customer->address = $request->address;
+        }
+        $customer->save();
+
+
+        if ($request->has('old_bag_id')) {
+            $oldBag = Bag::where('bag_id', $request->old_bag_id)
+                ->where('customer_id', $customer->id)
+                ->first();
+
+            if ($oldBag) {
+                $oldBag->update([
+                    'customer_id' => null,
+                    'status' => 'available',
+                    'qr_code_path' => null,
+                ]);
+            }}
+
+
+        $newBag = Bag::whereNull('customer_id')
+            ->where('status', 'available')
+            ->inRandomOrder()
+            ->first();
+
+        if (!$newBag) {
+            return response()->json(['message' => 'No available bags found'], 404);
+        }
+        $newBag->update([
+            'customer_id' => $customer->id,
+            'status' => 'unavailable',
+        ]);
+            $qrUrl = $this->generateBagQr($newBag, $user, $customer);
+            $qrUrls[] = $qrUrl;
+
 
         $customer->update($request->all());
 
@@ -119,14 +248,18 @@ class CustomerController extends Controller
                 'message' => 'Customer updated successfully ',
                 'result' => [
                     'id'=> $customer->id,
-                    'name'=> $customer->user->first_name.' '.$customer->user->last_name,
+                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'phone' => $user->phone,
+
                     'area'=> $customer->area->name,
                     'address'=> $customer->address,
-
+                    'bags_assigned' =>[$newBag->bag_id],
+                    'qr_urls' => $qrUrls
                 ]
-            ]
-            , 200);
+            ]);
     }
+
+
     public function editStatus(Request $request, $id)
     {
         $customer= Customer::find($id);
@@ -142,9 +275,11 @@ class CustomerController extends Controller
         ]);
 
         if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ]);}
 
-            return response()->json($validator->errors()->toJson(), 422);
-        }
         $newStatus = (int) $request->subscription_status;
 
 
@@ -173,7 +308,7 @@ class CustomerController extends Controller
         return response()->json([
                 'code' => 200,
                 'message' => 'Customer updated successfully ',
-                'result' => [
+                'data' => [
                     'id'=> $customer->id,
                     'name'=> $customer->user->first_name.' '.$customer->user->last_name,
                     'subscription_start_date' => $customer->subscription_start_date->toDateString(),
@@ -210,9 +345,10 @@ class CustomerController extends Controller
         });
 
             return response()->json([
+                'code'=>200,
                 'message' => 'Customers by Status ',
-                'result' => $allCustomer,
-            ], 200);
+                'data' => $allCustomer,
+            ]);
         }
     public function getCustomer($id)
     {
@@ -220,25 +356,19 @@ class CustomerController extends Controller
 
         if (!$customer) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Customer not found',
-            ], 404);
+            ]);
         }
 
         $customerMap = [
             'id' => $customer->id,
             'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
-            'area' => $customer->area->name,
+            'driverName' => $customer->area->driver_id->name,                              ///////////////
             'address' => $customer->address,
             'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
             'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
             'subscription_status' => $customer->subscription_status,
-//            'foodPreferences'=>[
-//                'preferred_food_type' => $customer->prefrence->preferred_food_type,
-//                'allergies'           => $customer->prefrence->allergies,
-//                'health_conditions'   => $customer->prefrence->health_conditions,
-//                'dietary_system'      => $customer->prefrence->dietary_system,
-//                'daily_calorie_needs' => $customer->prefrence->daily_calorie_needs,
-//                ]
 
         ];
 
@@ -246,7 +376,7 @@ class CustomerController extends Controller
         return response()->json([
             'code' => 200,
             'message' => 'This is Customer',
-            'result' => [
+            'data' => [
                 'customer' => $customerMap,
             ]
         ], 200);

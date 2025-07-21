@@ -22,18 +22,27 @@ class DriverAreaServiceController extends Controller
             'name' => 'required|string',
             'driver_id' => 'required|integer|exists:users,id',
 
+        ],[
+            'driver_id.exists'=>'driver is not exist in the system'
         ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ]);}
+
         $driverUser = User::find($request->driver_id);
 
         if (!$driverUser) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Driver user not found.'
-            ], 404);
+            ]);
         }
 
         if (!$driverUser->hasRole('driver')) {
             return response()->json([
-                'message' => 'The assigned user does not have the "driver" role.'
+                'message' => 'The assigned user does not have the driver role.'
             ], 403);
         }
 
@@ -45,7 +54,7 @@ class DriverAreaServiceController extends Controller
         return response()->json([
                 'code' => 201,
                 'message' => 'area added successfully ',
-                'result' => [
+                'data' => [
                     'id'=>$area->id,
                     'area_name' => $area->name,
                     'diver_name' => $area->driver->first_name . ' ' . $area->driver->last_name,                ]
@@ -60,18 +69,19 @@ class DriverAreaServiceController extends Controller
 
         if (!$area) {
             return response()->json([
+                'code'=>200,
                 'message' => 'Area not found',
-            ], 200);
+            ]);
         }
         $validator = Validator::make($request->all(), [
             'name' => 'string',
         ]);
 
         if ($validator->fails()) {
-
-            return response()->json($validator->errors()->toJson(), 400);
-        }
-
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ]);}
 
 
 
@@ -80,7 +90,7 @@ class DriverAreaServiceController extends Controller
         return response()->json([
                 'code' => 200,
                 'message' => 'Area updated successfully ',
-                'result' => [
+                'data' => [
                     'id'=>$area->id,
                     'area_name' => $area->name,
                     'diver_name' => $area->driver->first_name . ' ' . $area->driver->last_name,
@@ -106,7 +116,7 @@ class DriverAreaServiceController extends Controller
         return response()->json([
             'code' => 200,
             'message' => 'Area deleted successfully ',
-        ], 200);
+        ]);
 
     }
 //By All Or Name Or Driver

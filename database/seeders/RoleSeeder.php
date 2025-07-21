@@ -32,7 +32,16 @@ class RoleSeeder extends Seeder
             'getCustomer',
             'getCustomerByStatus',
             'getAllFoodPreferences',
-
+            'addBag',
+            'deleteBag',
+            'getAllBags',
+            'getBagsByStatus',
+            'searchBagById',
+             'getMessage',
+            'getMessageByType',
+            'getMessage',
+            'getMessageByType',
+            'getAllMessages'
 
 
 
@@ -52,14 +61,23 @@ class RoleSeeder extends Seeder
             'addCustomer',
             'updateCustomer',
             'editStatus',
-            //'getAllCustomer',
             'getCustomer',
             'getCustomerByStatus',
             'getAllFoodPreferences',
+            'addBag',
+            'deleteBag',
+            'getAllBags',
+            'getBagsByStatus',
+            'searchBagById',
+            'getMessage',
+            'getMessageByType',
+            'getAllMessages'
         ]);
 
        $driver= Role::create(['name' => 'driver']);
        $driver->givePermissionTo([
+           'forgetPassword',
+           'sendMessage'
 
        ]);
        $admin_cook= Role::create(['name' => 'admin_cook']);
@@ -69,11 +87,14 @@ class RoleSeeder extends Seeder
            'deleteMeal',
            'getMeal',
            'getAllMeal',//search
-           'updatePhoto'
+           'updatePhoto',
+           'forgetPassword'
        ]);
 
        $store_employee= Role::create(['name' => 'store_employee']);
        $store_employee->givePermissionTo([
+          'forgetPassword',
+           'sendMessage'
 
        ]);
 
@@ -82,7 +103,8 @@ class RoleSeeder extends Seeder
             'addFoodPreferences',
             'updateFoodPreferences',
             'deleteFoodPreferences',
-            'getCustomerFoodPreferences'
+            'getCustomerFoodPreferences',
+            'sendMessage'
 
         ]);
 

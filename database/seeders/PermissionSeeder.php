@@ -50,8 +50,17 @@ class PermissionSeeder extends Seeder
             'deleteMeal',
             'getMeal',
             'getAllMeal',//search
-            'updatePhoto'
-
+            'updatePhoto',
+            'forgetPassword',
+            'addBag',
+            'deleteBag',
+            'getAllBags',
+            'getBagsByStatus',
+            'searchBagById',
+            'sendMessage',
+            'getMessage',
+            'getMessageByType',
+            'getAllMessages'
         ];
 
         foreach ($permissions as $permission) {

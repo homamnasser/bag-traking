@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Storage;
+
 trait PhotoTrait
 {
     function saveImage($photo){
@@ -21,5 +23,6 @@ trait PhotoTrait
         }
         return json_encode($array);
     }
+
 
 }
