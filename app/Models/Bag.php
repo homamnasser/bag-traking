@@ -9,9 +9,9 @@ class Bag extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'bag_id'
+          'bag_id'
         , 'status'
-        , 'customer_id'
+        ,'customer_id'
         , 'qr_code_path'
         ,'last_update_at'
     ];

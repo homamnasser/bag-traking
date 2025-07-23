@@ -25,6 +25,7 @@ class CustomerController extends Controller
         $fileName = 'qr_codes/bag_' . $bag->bag_id . '.svg';
         $qrImage = QrCode::format('svg')->size(300)->generate($qrContent);
         Storage::disk('public')->put($fileName, $qrImage);
+        $QR = asset('storage/' . $fileName);
 
         $bag->update([
             'qr_code_path' => $fileName,
@@ -32,7 +33,7 @@ class CustomerController extends Controller
             'status' => 'unavailable',
         ]);
 
-        return asset('storage/' . $fileName);
+        return $QR;
     }
 
     public function addCustomer(Request $request)
@@ -40,7 +41,7 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:55',
             'last_name' => 'required|string|max:55',
-            'phone' =>  ['required', 'string', 'unique:users,phone', 'regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
+            'phone' =>  ['required', 'string', 'unique:users,phone','regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
             'password' => 'required|string|min:6|confirmed',
             'email'=> 'required|email|unique:users,email',
             'image' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
@@ -49,7 +50,9 @@ class CustomerController extends Controller
             'subscription_status' => 'required|in:0,1',
 
         ],['phone.unique' => 'the phone already exist',
-            'phone.regex' =>'please enter a valid  phone number' ]);
+            'phone.regex' =>'please enter a valid  phone number' ,
+            'area_id.exists'=>'Area not found'
+        ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -65,6 +68,12 @@ class CustomerController extends Controller
             $image = 'storage/' . $fileName;
             $images=asset($image);
         }
+        $bags = Bag::where('status', 'available')->take(2)->get();
+        if ($bags->count() < 2) {
+            return response()->json([
+                'code' => 422,
+                'message' => 'Not enough available bags to assign to this customer.']);
+        }
 
         $user = User::create([
             'first_name' => $request->first_name,
@@ -77,20 +86,6 @@ class CustomerController extends Controller
         ]);
 
         $user->assignRole('customer');
-
-        $area = DriverAreaService::find($request->area_id);
-        if (!$area) {
-            return response()->json([
-                'message' => 'Area not found'
-            ], 404);
-        }
-
-        $bags = Bag::where('status', 'available')->take(2)->get();
-        if ($bags->count() < 2) {
-            return response()->json([
-                'code' => 422,
-                'message' => 'Not enough available bags to assign to this customer.']);
-        }
 
         $subscriptionStartDate = Carbon::now();
 
@@ -130,6 +125,7 @@ class CustomerController extends Controller
                 ]
             ]);
     }
+
     public function updateCustomer(Request $request, $id)
     {
         $customer = Customer::find($id);
@@ -141,7 +137,6 @@ class CustomerController extends Controller
                 'data'=>[]
             ]);
         }
-
         $user = $customer->user;
 
         if (!$user) {
@@ -155,7 +150,7 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|max:55',
             'last_name'  => 'string|max:55',
-            'phone' => [ 'string', 'unique:users,phone', 'regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
+            'phone' => ['string','unique:users,phone','regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
             'email'=> 'email|unique:users,email',
             'is_active'  => 'boolean',
             'password'   => 'string|min:6|confirmed',
@@ -164,8 +159,10 @@ class CustomerController extends Controller
             'address' => 'string',
             'old_bag_id' => 'exists:bags,bag_id'
             ],[
-                'phone.unique' => 'the phone already exist',
-                'phone.regex' =>'please enter a valid  phone number' ]);
+                'phone.unique' => 'The phone already exist',
+                'phone.regex' =>'Please enter a valid  phone number',
+                'old_bag_id.exists'=>'There is no bag in this ID in the system'
+            ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -180,17 +177,12 @@ class CustomerController extends Controller
             $dataToUpdate['password'] = Hash::make($request->password);
         }
 
-
-        if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $fileName = 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('images', $fileName, 'public');
-            $images = asset('storage/' . $path);
-            $dataToUpdate['image'] = $images;
-        } else {
-            $dataToUpdate['image'] = null;
-        }
-
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $fileName = 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('images', $fileName, 'public');
+                $dataToUpdate['image'] = asset('storage/' . $path);
+            }
         $user->update($dataToUpdate);
 
         if ($request->has('area_id')) {
@@ -204,44 +196,42 @@ class CustomerController extends Controller
             }
             $customer->area_id = $request->area_id;
         }
-
         if ($request->filled('address')) {
             $customer->address = $request->address;
         }
-        $customer->save();
 
-
-        if ($request->has('old_bag_id')) {
+       /* if ($request->has('old_bag_id')) {
             $oldBag = Bag::where('bag_id', $request->old_bag_id)
                 ->where('customer_id', $customer->id)
                 ->first();
 
             if ($oldBag) {
                 $oldBag->update([
-                    'customer_id' => null,
-                    'status' => 'available',
-                    'qr_code_path' => null,
-                ]);
-            }}
+                        'customer_id' => null,
+                        'status' => 'available',
+                        'qr_code_path' => null,
+                    ]);
 
+            $newBag = Bag::whereNull('customer_id')
+                ->where('status', 'available')
+                ->inRandomOrder()
+                ->first();
 
-        $newBag = Bag::whereNull('customer_id')
-            ->where('status', 'available')
-            ->inRandomOrder()
-            ->first();
+            if (!$newBag) {
+                return response()->json(['message' => 'No available bags found'], 404);
+            }
 
-        if (!$newBag) {
-            return response()->json(['message' => 'No available bags found'], 404);
+            $this->generateBagQr($newBag, $user, $customer);
         }
-        $newBag->update([
-            'customer_id' => $customer->id,
-            'status' => 'unavailable',
-        ]);
-            $qrUrl = $this->generateBagQr($newBag, $user, $customer);
-            $qrUrls[] = $qrUrl;
 
-
-        $customer->update($request->all());
+        $qrUrls = Bag::where('customer_id', $customer->id)
+            ->whereNotNull('qr_code_path')
+            ->get('qr_code_path')
+            ->map(function($bag) {
+                return asset('storage/' . $bag->qr_code_path);
+            });
+*/
+        $customer->save();
 
         return response()->json([
                 'code' => 200,
@@ -250,11 +240,11 @@ class CustomerController extends Controller
                     'id'=> $customer->id,
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'phone' => $user->phone,
-
+                    'image'=>$user->image,
                     'area'=> $customer->area->name,
                     'address'=> $customer->address,
-                    'bags_assigned' =>[$newBag->bag_id],
-                    'qr_urls' => $qrUrls
+                    //'bags_assigned' => $customer->bags()->pluck('bag_id'),
+                    //'qr_urls' => $qrUrls
                 ]
             ]);
     }
@@ -315,8 +305,7 @@ class CustomerController extends Controller
                     'subscription_start_date' => $customer->subscription_start_date->toDateString(),
                     'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
                 ]
-            ]
-            , 200);
+            ]);
     }
 
 
@@ -380,6 +369,6 @@ class CustomerController extends Controller
             'data' => [
                 'customer' => $customerMap,
             ]
-        ], 200);
+        ]);
     }
 }

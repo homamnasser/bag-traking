@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class MessageController extends Controller
@@ -41,6 +42,67 @@ class MessageController extends Controller
 
     }
 
+    public function respondRequest(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'action' => 'required|string|in:approved,rejected',
+            'id_message'=>'required|exists:message,id'
+        ], [
+            'action.required' => 'You must select an action type ',
+            'message.exists'=>'The message was not found '
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+        $message = Message::find($request->id_message);
+        $user = User::find($message->user_id);
+
+         if($request->action ==='approved'){
+
+             if($message->type==='account_creation'){
+
+                 $user->update(['is_active' => true]);
+
+                 return response()->json([
+                     'code' => 200,
+                     'message' =>'Account creation request approved successfully.',
+                 ]);
+
+             } elseif ($message->type === 'account_update') {
+                 $newPassword = $message->data['new_password'];
+
+                 if (!$newPassword) {
+                     return response()->json([
+                         'code' => 400,
+                         'message' => 'New password not found in the request data.',
+                     ]);
+                 }
+
+                 $user->update([
+                     'password' => Hash::make($newPassword),
+                 ]);
+
+                 return response()->json([
+                     'code' => 200,
+                     'message' => 'Password change request approved and updated successfully.',
+                 ]);
+             }
+
+         } else {
+             return response()->json([
+                 'code' => 200,
+                 'message' => 'The request was rejected successfully.',
+             ]);
+         }
+    }
+
+
+
+
+
     public function sendMessage(Request $request)
     {
 
@@ -62,7 +124,7 @@ class MessageController extends Controller
             'subject' => $request->subject,
             'data' => $request->data,
             'type' => 'issue',
-            'status' => 'rejected'
+            'status' => 'approved'
 
         ]);
 
@@ -94,6 +156,7 @@ class MessageController extends Controller
     public function getMessage($id)
     {
         $message=Message::find($id);
+
         if (!$message) {
             return response()->json([
                 'code'=>404,

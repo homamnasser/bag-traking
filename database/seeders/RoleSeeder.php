@@ -41,7 +41,8 @@ class RoleSeeder extends Seeder
             'getMessageByType',
             'getMessage',
             'getMessageByType',
-            'getAllMessages'
+            'getAllMessages',
+            'respondRequest'
 
 
 
@@ -71,7 +72,8 @@ class RoleSeeder extends Seeder
             'searchBagById',
             'getMessage',
             'getMessageByType',
-            'getAllMessages'
+            'getAllMessages',
+            'respondRequest'
         ]);
 
        $driver= Role::create(['name' => 'driver']);

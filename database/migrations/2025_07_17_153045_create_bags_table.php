@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('status', ['available', 'unavailable'])->default('available');
             $table->foreignId('customer_id')->nullable()->constrained()->onDelete('set null');
             $table->string('qr_code_path')->nullable();
-            $table->string('last_update_at')->nullable();
+            $table->string('last_update_at')->nullable()->default('atStore');
             $table->timestamps();
         });
     }

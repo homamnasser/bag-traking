@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade'); // صاحب الطلب
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->enum('type', ['account_creation', 'account_update', 'issue']);
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->string('subject')->nullable();

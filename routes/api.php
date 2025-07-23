@@ -9,6 +9,7 @@ use App\Http\Controllers\DriverAreaServiceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\MealController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\WorkerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -38,9 +39,9 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['api', 'auth:sanctum', 'role:driver|store_employee|admin_cook'],
+    'middleware' => ['api', 'auth:sanctum','role:driver|store_employee|admin_cook'],
 ], function ($router) {
-    Route::post('/forgetPassword', [DriverController::class,'forgetPassword']);
+    Route::post('/forgetPassword', [WorkerController::class,'forgetPassword']);
 });
 
 
@@ -121,12 +122,28 @@ Route::group([
         Route::get('/searchBagById/{id}', [BagController::class,'searchBagById']);
     });
 
+
+
+   Route::group([
+    'middleware' => ['api','auth:sanctum','role:store_employee|driver'],
+    ], function ($router) {
+    Route::get('/bag', [WorkerController::class,'scanQr']);
+   });
+
+
+
+
+
 Route::group([
-    'middleware' => ['api', 'auth:sanctum','role:driver|store_employee|customer'],
+    'middleware' => ['api', 'auth:sanctum'],
     'prefix' => 'message'
 ], function ($router) {
-    Route::post('/sendMessage', [MessageController::class,'sendMessage']);
+    Route::post('/sendMessage', [MessageController::class,'sendMessage'])
+        ->middleware('role:driver|store_employee|customer');
 
+
+    Route::post('/respondRequest', [MessageController::class,'respondRequest'])
+        ->middleware('role:admin|super_admin');
 });
 
 
@@ -135,3 +152,4 @@ Route::middleware(['auth:sanctum','role:super_admin|admin'])
 
 //Route::middleware(['auth:sanctum','role:super_admin|admin'])
 //    ->post('/addArea', [DriverAreaServiceController::class,'addArea']);
+

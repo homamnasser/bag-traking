@@ -3,16 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\DriverAreaService;
-use App\Models\Message;
+
 use App\Models\User;
 use App\Traits\PhotoTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator; // إذا كنت تفضل استخدام Validator::make() بدلاً من $request->validate()
-// لا تحتاج لاستيراد Spatie\Permission\Traits\HasRoles هنا، بل في موديل User
-
+use Illuminate\Support\Facades\Validator;
 class AdminController extends Controller
 {
     public function __construct()
@@ -26,7 +24,7 @@ class AdminController extends Controller
      $validator = Validator::make($request->all(), [
          'first_name' => 'required|string|max:55',
          'last_name'  => 'required|string|max:55',
-         'phone'      => ['required', 'unique:users,phone', 'regex:/^\+9715[0,2-8]\d{7}$/'],
+         'phone'      => ['required', 'unique:users,phone','regex:/^\+9715[0,2-8]\d{7}$/'],
          'password'   => 'required|string|min:6|confirmed',
          'role'       => 'required|string|in:admin,admin_cook,driver,store_employee',
          'image.*' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
@@ -87,11 +85,12 @@ class AdminController extends Controller
                 'result'=>[]
             ]);
         }
-        if ($request->role === 'admin' && !Auth::user()->hasRole('super_admin')) {  /////////////////
+
+        if ($user->id === 1) {
             return response()->json([
-                'message' => 'Only super admin can update an admin user.'
-            ], 403);
-        }
+                'code'=>403,
+                'message' => 'Cannot update the primary system user (ID: 1).'
+            ]);}
 
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|max:55',
@@ -113,8 +112,6 @@ class AdminController extends Controller
                 'message' => $validator->errors()->first(),
             ]);}
 
-
-
         $dataToUpdate = $request->only([
             'first_name',
             'last_name',
@@ -126,18 +123,13 @@ class AdminController extends Controller
             $dataToUpdate['password'] = Hash::make($request->password);
         }
 
-
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             $fileName = 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('images', $fileName, 'public');
-            $images = asset('storage/' . $path);
-            $dataToUpdate['image'] = $images;
+            $dataToUpdate['image'] = asset('storage/' . $path);
         }
-        else {
-            $images = null;
-            $dataToUpdate['image'] = null;
-        }
+
         $user->update($dataToUpdate);
 
         if ($request->has('role') && !empty($request->role)) {
@@ -155,7 +147,7 @@ class AdminController extends Controller
                 'phone'=> $user->phone,
                 'role'=> $currentRole,
                 'is_active'  => $user->is_active,
-                'image'=>$images
+                'image'=>$user->image
             ]
         ]);
     }
@@ -181,7 +173,7 @@ class AdminController extends Controller
             if ($area) {
                 return response()->json([
                     'code' => 403,
-                    'message' => "Cannot delete the driver assigned to area ID: {$area->id}"
+                    'message' => "Cannot delete the driver assigned to area ID: {$area->id} Please assign the area to another driver and then try again"
                 ]);
             }
         }

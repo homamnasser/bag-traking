@@ -36,4 +36,6 @@ class Customer extends Model
         'subscription_start_date' => 'datetime',
         'subscription_expiry_date' => 'datetime',
     ];
+
+
 }
