@@ -55,7 +55,7 @@ class MessageController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);
+            ],422);
         }
         $message = Message::find($request->id_message);
         $user = User::find($message->user_id);
@@ -69,7 +69,7 @@ class MessageController extends Controller
                  return response()->json([
                      'code' => 200,
                      'message' =>'Account creation request approved successfully.',
-                 ]);
+                 ],200);
 
              } elseif ($message->type === 'account_update') {
                  $newPassword = $message->data['new_password'];
@@ -78,7 +78,7 @@ class MessageController extends Controller
                      return response()->json([
                          'code' => 400,
                          'message' => 'New password not found in the request data.',
-                     ]);
+                     ],400);
                  }
 
                  $user->update([
@@ -88,14 +88,14 @@ class MessageController extends Controller
                  return response()->json([
                      'code' => 200,
                      'message' => 'Password change request approved and updated successfully.',
-                 ]);
+                 ],200);
              }
 
          } else {
              return response()->json([
                  'code' => 200,
                  'message' => 'The request was rejected successfully.',
-             ]);
+             ],200);
          }
     }
 
@@ -131,7 +131,7 @@ class MessageController extends Controller
         return response()->json([
             'code' => 201,
             'message' => "the message has been send successfully."
-        ]);
+        ],201);
 
     }
 

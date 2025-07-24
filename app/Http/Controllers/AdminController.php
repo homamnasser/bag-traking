@@ -36,7 +36,7 @@ class AdminController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
         $role = $request->role;
         $images = null;
@@ -63,14 +63,14 @@ class AdminController extends Controller
             return response()->json([
                 'code' => 201,
                 'message' => "{$role} user created successfully.",
-                'result' => [
+                'data' => [
                     'id' => $user->id,
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'phone' => $user->phone,
                     'role' => $role,
                    'image'=> $images
                 ]
-            ]);
+            ],201);
         }
 
 
@@ -82,15 +82,15 @@ class AdminController extends Controller
             return response()->json([
                 'code'=>404,
                 'message' => 'User not found',
-                'result'=>[]
-            ]);
+                'data'=>[]
+            ],404);
         }
 
         if ($user->id === 1) {
             return response()->json([
                 'code'=>403,
                 'message' => 'Cannot update the primary system user (ID: 1).'
-            ]);}
+            ],403);}
 
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|max:55',
@@ -110,7 +110,7 @@ class AdminController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
         $dataToUpdate = $request->only([
             'first_name',
@@ -149,7 +149,7 @@ class AdminController extends Controller
                 'is_active'  => $user->is_active,
                 'image'=>$user->image
             ]
-        ]);
+        ],200);
     }
     public function deleteUser($id)
     {
@@ -160,13 +160,13 @@ class AdminController extends Controller
                 'code'=>404,
                 'message' => 'User not found',
                 'data'=>[]
-            ]);
+            ],404);
         }
         if ($user->id === 1) {
             return response()->json([
                 'code'=>403,
                 'message' => 'Cannot delete the primary system user (ID: 1).'
-            ]);
+            ],403);
         }
         if ($user->hasRole('driver')) {
             $area = DriverAreaService::where('driver_id', $user->id)->first();
@@ -174,7 +174,7 @@ class AdminController extends Controller
                 return response()->json([
                     'code' => 403,
                     'message' => "Cannot delete the driver assigned to area ID: {$area->id} Please assign the area to another driver and then try again"
-                ]);
+                ],403);
             }
         }
 
@@ -183,7 +183,7 @@ class AdminController extends Controller
         return response()->json([
             'code'=> 200 ,
             'message' => 'Uesr deleted successfully ',
-        ]);
+        ],200);
 
     }
     public function getUser($id)
@@ -192,7 +192,9 @@ class AdminController extends Controller
 
         if (!$user) {
             return response()->json([
+                'code'=>404,
                 'message' => 'User not found',
+                'data'=>[]
             ], 404);
         }
         return response()->json([
@@ -202,10 +204,12 @@ class AdminController extends Controller
                     'id'=> $user->id,
                     'name'=> $user->first_name.' '.$user->last_name,
                     'phone'=> $user->phone,
+                    'password'=>$user->password,   ///////////////////////////////
+                    'is_active'=>$user->is_active,
                     'role'=> $user->getRoleNames()->first(),
                     'image'=>$user->image
                 ]
-            ]);
+            ],200);
     }
 
 //first/last name phone role/active
@@ -232,7 +236,7 @@ class AdminController extends Controller
                 'code'=>404,
                 'message' => 'No users found.',
                 'data'=>[]
-            ]);
+            ],404);
         }
 
         $allUsers = $users->map(function ($user) {
@@ -240,6 +244,8 @@ class AdminController extends Controller
                 'id' => $user->id,
                 'full_name' => $user->first_name . ' ' . $user->last_name,
                 'phone' => $user->phone,
+                'is_active'=>$user->is_active,
+                'image'=>$user->image,
                 'role' => $user->getRoleNames()->first(),
             ];
         });
@@ -248,7 +254,7 @@ class AdminController extends Controller
             'code'=> 200,
             'message' => 'Users retrieved successfully.',
             'data' => $allUsers,
-        ]);
+        ],200);
     }
 
 }

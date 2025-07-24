@@ -21,6 +21,7 @@ class CustomerFoodPreferencesController extends Controller
         $user = Auth::user();
         if (!$user) {
             return response()->json([
+                'code'=>401,
                 'message' => 'Unauthenticated. Please log in.'
             ], 401);
         }
@@ -30,7 +31,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if (!$customer) {
             return response()->json([
-                'message' => 'No customer profile found for the authenticated user. Please create a customer profile first.'
+                'code'=>404,
+                'message' => 'No customer profile found for the authenticated user. Please create a customer profile first.',
+                'data'=>[]
             ], 404);
         }
 
@@ -44,12 +47,10 @@ class CustomerFoodPreferencesController extends Controller
 
 
         if ($validator->fails()) {
-
             return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ],422);}
 
         $foodPrefer = Customer_Food_Preferences::create([
             'customer_id'         => $customer->id,
@@ -63,7 +64,7 @@ class CustomerFoodPreferencesController extends Controller
         return response()->json([
             'code' => 201,
             'message' => 'Customer food preference added successfully.',
-            'result' => [
+            'data' => [
                 'id'                  => $foodPrefer->id,
                 'customer_id'         => $foodPrefer->customer_id,
                 'name'                => $user->first_name . ' ' . $user->last_name,
@@ -80,6 +81,7 @@ class CustomerFoodPreferencesController extends Controller
         $user = Auth::user();
         if (!$user) {
             return response()->json([
+                'code'=>401,
                 'message' => 'Unauthenticated. Please log in.'
             ], 401);
         }
@@ -87,7 +89,9 @@ class CustomerFoodPreferencesController extends Controller
         $customer = Customer::where('user_id', $user->id)->first();
         if (!$customer) {
             return response()->json([
-                'message' => 'No customer profile found for the authenticated user. Cannot update food preferences.'
+                'code'=>404,
+                'message' => 'No customer profile found for the authenticated user. Cannot update food preferences.',
+                'data'=>[]
             ], 404);
         }
 
@@ -95,7 +99,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if (!$foodPrefer) {
             return response()->json([
-                'message' => 'Food preferences not found for this customer. Please add them first.'
+                'code'=>404,
+                'message' => 'Food preferences not found for this customer. Please add them first.',
+                'data'=>[]
             ], 404); // 404 Not Found
         }
 
@@ -109,10 +115,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ],422);}
 
         $foodPrefer->update($request->only([
             'preferred_food_type',
@@ -126,7 +131,7 @@ class CustomerFoodPreferencesController extends Controller
         return response()->json([
             'code' => 200,
             'message' => 'Customer food preference updated successfully.',
-            'result' => [
+            'data' => [
                 'id'                  => $foodPrefer->id,
                 'customer_id'         => $foodPrefer->customer_id,
                 'name'      => $user->first_name . ' ' . $user->last_name,
@@ -144,6 +149,7 @@ class CustomerFoodPreferencesController extends Controller
         $user = Auth::user();
         if (!$user) {
             return response()->json([
+                'code'=>401,
                 'message' => 'Unauthenticated. Please log in.'
             ], 401);
         }
@@ -153,7 +159,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if (!$customer) {
             return response()->json([
-                'message' => 'No customer profile found for the authenticated user. Please create a customer profile first.'
+                'code'=>404,
+                'message' => 'No customer profile found for the authenticated user. Please create a customer profile first.',
+                'data'=>[]
             ], 404);
         }
 
@@ -161,7 +169,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if (!$foodPrefer) {
             return response()->json([
-                'message' => 'Food preferences not found for this customer.'
+                'code'=>404,
+                'message' => 'Food preferences not found for this customer.',
+                'data'=>[]
             ], 404); // 404 Not Found
         }
         $foodPrefer->delete();
@@ -178,7 +188,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if ($preferFoods->isEmpty()) {
             return response()->json([
+                'code'=>404,
                 'message' => 'No Food found.',
+                'data'=>[]
             ], 404);
         }
 
@@ -199,7 +211,7 @@ class CustomerFoodPreferencesController extends Controller
         return response()->json([
             'code' => 200,
             'message' => 'All Food Prefer retrieved successfully.',
-            'result' =>$allPreferFoods ,
+            'data' =>$allPreferFoods ,
         ], 200);
     }
 
@@ -209,6 +221,7 @@ class CustomerFoodPreferencesController extends Controller
         $user = Auth::user();
         if (!$user) {
             return response()->json([
+                'code'=>401,
                 'message' => 'Unauthenticated. Please log in.'
             ], 401);
         }
@@ -218,7 +231,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if (!$customer) {
             return response()->json([
-                'message' => 'No customer profile found for the authenticated user. Please create a customer profile first.'
+                'code'=>404,
+                'message' => 'No customer profile found for the authenticated user. Please create a customer profile first.',
+                'data'=>[]
             ], 404);
         }
 
@@ -226,7 +241,9 @@ class CustomerFoodPreferencesController extends Controller
 
         if (!$foodPrefer) {
             return response()->json([
-                'message' => 'Food preferences not found for this customer.'
+                'code'=>404,
+                'message' => 'Food preferences not found for this customer.',
+                'data'=>[]
             ], 404);
         }
 
@@ -235,7 +252,7 @@ class CustomerFoodPreferencesController extends Controller
         return response()->json([
             'code' => 200,
             'message' => 'Food Prefer retrieved successfully.',
-            'result' =>
+            'data' =>
             [
                 'id'                  => $foodPrefer->id,
                 'customer_id'         => $foodPrefer->customer_id,

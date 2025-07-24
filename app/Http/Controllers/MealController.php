@@ -22,10 +22,13 @@ class MealController extends Controller
             'imgs'=> 'required',
             'imgs.*' => [ 'image', 'mimes:jpeg,png,jpg,gif', 'max:512'],
         ]);
-
         if ($validator->fails()) {
-            return response()->json($validator->errors()->toJson(), 400);
-        }
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ],422);}
+
+
         $images = $this->upload($request->imgs);
 
         $meal = Meal::create([
@@ -42,7 +45,7 @@ class MealController extends Controller
         return response()->json([
             'code' => 201,
             'message' => 'Meal added successfully ',
-            'result' => [
+            'data' => [
                 'id' => $meal->id,
                 'name' => $meal->name,
                 'description' => $meal->description,
@@ -61,8 +64,10 @@ class MealController extends Controller
 
         if (!$meal) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Meal not found',
-            ], 200);
+                'data'=>[]
+            ], 404);
         }
         $validator = Validator::make($request->all(), [
             'name' => 'string',
@@ -73,16 +78,17 @@ class MealController extends Controller
             ]);
 
         if ($validator->fails()) {
-
-            return response()->json($validator->errors()->toJson(), 400);
-        }
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ],422);}
 
         $meal->update($request->all());
 
         return response()->json([
                 'code' => 200,
                 'message' => 'Meal updated successfully ',
-                'result' => [
+                'data' => [
                     'id' => $meal->id,
                     'name' => $meal->name,
                     'description' => $meal->description,
@@ -101,8 +107,10 @@ class MealController extends Controller
 
         if (!$meal) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Meal not found',
-            ], 200);
+                'data'=>[]
+            ], 404);
         }
 
 
@@ -121,13 +129,15 @@ class MealController extends Controller
 
         if (!$meal) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Meal not found',
+                'data'=>[]
             ], 404);
         }
         return response()->json([
                 'code' => 200,
                 'message' => 'This is Meal ',
-                'result' => [
+                'data' => [
                     'id' => $meal->id,
                     'name' => $meal->name,
                     'description' => $meal->description,
@@ -174,13 +184,15 @@ class MealController extends Controller
 
         if ($allMeals->isEmpty()) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Not Found Meals',
-            ], 200);
+                'data'=>[]
+            ], 404);
         }
         return response()->json([
                 'code' => 200,
                 'message' => 'Meals',
-                'result' => [
+                'data' => [
                     'meal' => $allMeals,
                 ]
             ]
@@ -192,7 +204,9 @@ class MealController extends Controller
 
         if (!$meal) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Meal not found',
+                'data'=>[]
             ], 404);
         }
 
@@ -200,9 +214,15 @@ class MealController extends Controller
             'imgs'=> 'required',
             'imgs.*' => [ 'image', 'mimes:jpeg,png,jpg,gif', 'max:512'],
         ]);
+
+
         if ($validator->fails()) {
-            return response()->json($validator->errors()->toJson(), 400);
-        }
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ],422);}
+
+
         $images = $this->upload($request->imgs);
 
         $meal->update([
@@ -211,7 +231,7 @@ class MealController extends Controller
         return response()->json([
                 'code' => 200,
                 'message' => 'Updated photo',
-                'result' => [
+                'data' => [
                     'imgs' =>json_decode($images) ,
                 ]
             ]

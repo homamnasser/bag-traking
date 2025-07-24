@@ -31,7 +31,7 @@ class AuthController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
 
         $role = $request->role;
@@ -65,7 +65,7 @@ class AuthController extends Controller
         return response()->json([
             'code'=>200,
             'message' => 'Your account creation request has been submitted  to the restaurant management and is pending approval.',
-        ]);
+        ],200);
     }
 
 
@@ -82,19 +82,19 @@ class AuthController extends Controller
             return response()->json([
                 'code' => 404,
                 'message' => 'The phone is incorrect'
-            ]);}
+            ],404);}
 
         if (!Auth::attempt($request->only(['phone', 'password']))) {
             return response()->json([
                 'code' =>401 ,
                 'message' => 'The password is incorrect'
-            ]);
+            ],401);
         }
          if(!$user->is_active) {
              return response()->json([
-                 'code' => 401,
+                 'code' => 403,
                  'message' => 'The account is not activated yet. Please contact the restaurant management if there is an issue.'
-             ]);
+             ],403);
          }
 
         $token = $user->createToken('API TOKEN')->plainTextToken;
@@ -105,7 +105,7 @@ class AuthController extends Controller
             'code' => 200,
             'message' => 'user login successfully',
             'data' =>array_merge($userData, ['role' => $role],['token'=>$token])
-        ]);
+        ],200);
     }
 
 }

@@ -32,7 +32,6 @@ class CustomerController extends Controller
             'customer_id' => $customer->id,
             'status' => 'unavailable',
         ]);
-
         return $QR;
     }
 
@@ -41,7 +40,7 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:55',
             'last_name' => 'required|string|max:55',
-            'phone' =>  ['required', 'string', 'unique:users,phone','regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
+            'phone' => ['required','phone:AUTO', 'unique:users,phone'],
             'password' => 'required|string|min:6|confirmed',
             'email'=> 'required|email|unique:users,email',
             'image' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
@@ -58,7 +57,7 @@ class CustomerController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
         $images = null;
         if ($request->hasFile('image')) {
@@ -72,7 +71,7 @@ class CustomerController extends Controller
         if ($bags->count() < 2) {
             return response()->json([
                 'code' => 422,
-                'message' => 'Not enough available bags to assign to this customer.']);
+                'message' => 'Not enough available bags to assign to this customer.'],422);
         }
 
         $user = User::create([
@@ -123,7 +122,7 @@ class CustomerController extends Controller
                     'bags_assigned' => $bags->pluck('bag_id'),
                     'qr_urls' => $qrUrls
                 ]
-            ]);
+            ],201);
     }
 
     public function updateCustomer(Request $request, $id)
@@ -135,7 +134,7 @@ class CustomerController extends Controller
                 'code'=>404,
                 'message' => 'Customer not found',
                 'data'=>[]
-            ]);
+            ],404);
         }
         $user = $customer->user;
 
@@ -144,7 +143,7 @@ class CustomerController extends Controller
                 'code'=>404,
                 'message' => 'User not found',
                 'data'=>[]
-            ]);
+            ],404);
         }
 
         $validator = Validator::make($request->all(), [
@@ -168,7 +167,7 @@ class CustomerController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
 
         $dataToUpdate = $request->only(['first_name', 'last_name', 'phone','email','is_active']);
@@ -192,7 +191,7 @@ class CustomerController extends Controller
                     'code'=>404,
                     'message' => 'Area not found',
                     'data'=>[]
-                ]);
+                ],404);
             }
             $customer->area_id = $request->area_id;
         }
@@ -246,7 +245,7 @@ class CustomerController extends Controller
                     //'bags_assigned' => $customer->bags()->pluck('bag_id'),
                     //'qr_urls' => $qrUrls
                 ]
-            ]);
+            ],200);
     }
 
 
@@ -256,9 +255,10 @@ class CustomerController extends Controller
 
         if (!$customer) {
             return response()->json([
-                'code'=>200,
+                'code'=>404,
                 'message' => 'Customer not found',
-            ]);
+                'data'=>[]
+            ],404);
         }
         $validator = Validator::make($request->all(), [
             'subscription_status' => 'required|in:0,1',
@@ -269,7 +269,7 @@ class CustomerController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
         $newStatus = (int) $request->subscription_status;
 
@@ -305,61 +305,92 @@ class CustomerController extends Controller
                     'subscription_start_date' => $customer->subscription_start_date->toDateString(),
                     'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
                 ]
-            ]);
+            ],200);
     }
 
 
         public function getCustomerByStatus($request){
-        if ($request == "all") {
-            $customers = Customer::all();
-        }
-        else{
-            $customers = Customer::where('subscription_status', $request)->get();
-        if ($customers->isEmpty()) {
-            return response()->json([
-                'message' => 'No Customers found.',
-            ], 404);
-        }
-}
-        $allCustomer = $customers->map(function ($customer) {
-            return [
-                'id' => $customer->id,
-                'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
-                'area' => $customer->area->name,
-                'address' => $customer->address,
-                'subscription_start_date' => $customer->subscription_start_date->toDateString(),
-                'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
-                'subscription_status' => $customer->subscription_status,
+            $query = Customer::with(['user', 'area.driver', 'bags']);
 
-            ];
-        });
+            if ($request != "all") {
+                $query->where('subscription_status', $request);
+            }
+
+            $customers = $query->get();
+
+            if ($customers->isEmpty()) {
+                return response()->json([
+                    'code' => 404,
+                    'message' => 'No Customers found.',
+                    'data' => []
+                ], 404);
+            }
+
+            $allCustomer = $customers->map(function ($customer) {
+                $bags = $customer->bags;
+
+                $qrUrls = $bags->map(function ($bag) {
+                    return $bag->qr_code_path ? asset('storage/' . $bag->qr_code_path) : null;
+                });
+
+                return [
+                    'id' => $customer->id,
+                    'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+                    'phone' => $customer->user->phone,
+                    'email' => $customer->user->email,
+                    'is_active' => $customer->user->is_active,
+                    'image' => $customer->user->image,
+                    'address' => $customer->address,
+                    'area' => $customer->area->name ,
+                    'driverName' => optional($customer->area->driver)->first_name . ' ' . optional($customer->area->driver)->last_name,
+                    'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
+                    'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
+                    'subscription_status' => $customer->subscription_status,
+                    'bags_assigned' => $bags->pluck('bag_id'),
+                    'qr_urls' => $qrUrls,
+                ];
+            });
 
             return response()->json([
-                'code'=>200,
-                'message' => 'Customers by Status ',
-                'data' => $allCustomer,
-            ]);
+                'code' => 200,
+                'message' => 'Customers by Status',
+                'data' => $allCustomer
+            ], 200);
         }
+
     public function getCustomer($id)
     {
-        $customer = Customer::with('user', 'area.driver')->find($id);;
+        $customer = Customer::with('user', 'area.driver','bags')->find($id);
+
+        $bags = $customer->bags;
+
+        $qrUrls = $bags->map(function($bag) {
+            return $bag->qr_code_path ? asset('storage/' . $bag->qr_code_path) : null;
+        });
 
         if (!$customer) {
             return response()->json([
                 'code'=>404,
                 'message' => 'Customer not found',
-            ]);
+                'data'=>[]
+            ],404);
         }
 
         $customerMap = [
             'id' => $customer->id,
-            'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+            'full_name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+            'phone'=>$customer->user->phone,
+            'email'=>$customer->user->email,
+            'is_active'=>$customer->user->is_active,
+            'image'=>$customer->user->image,
+            'area' => $customer->area->name,
             'driverName' => $customer->area->driver->first_name.''.$customer->area->driver->last_name,                              ///////////////
             'address' => $customer->address,
             'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
             'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
             'subscription_status' => $customer->subscription_status,
-
+            'bags_assigned' => $bags->pluck('bag_id'),
+            'qr_urls' => $qrUrls
         ];
 
 
@@ -369,6 +400,6 @@ class CustomerController extends Controller
             'data' => [
                 'customer' => $customerMap,
             ]
-        ]);
+        ],200);
     }
 }

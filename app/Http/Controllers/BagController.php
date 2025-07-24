@@ -18,7 +18,7 @@ class BagController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
         $quantity = $request->input('quantity');
 
@@ -36,7 +36,7 @@ class BagController extends Controller
         return response()->json([
             'code'=>201,
             'message' => "$quantity bag(s) created successfully.",
-        ]);
+        ],201);
     }
 
     public function deleteBag($id){
@@ -47,20 +47,20 @@ class BagController extends Controller
             return response()->json([
                 'code'=>404,
                 'message' => 'Bag not found.',
-                'result'=>[]
-            ]);
+                'data'=>[]
+            ],404);
         }
         if ($bag->customer_id !== null) {
             return response()->json([
-                'code'=>400,
+                'code'=>403,
                 'message' => 'Cannot delete bag. It is assigned to a customer.',
-            ]);
+            ],403);
         }
         $bag->delete();
         return response()->json([
             'code'=>200,
             'message' => 'Bag deleted successfully.',
-        ]);
+        ],200);
     }
 
     public function getAllBags(){
@@ -69,7 +69,7 @@ class BagController extends Controller
         return response()->json([
             'code'=>200,
             'data' => $bags
-        ]);
+        ],200);
     }
     public function getBagsByStatus($status)
     {
@@ -77,7 +77,7 @@ class BagController extends Controller
             return response()->json([
                 'code'=>400,
                 'message' => 'Invalid status. Use available or unavailable.'
-            ]);
+            ],400);
         }
         $bags = Bag::where('status',$status)
             ->get();
@@ -85,7 +85,7 @@ class BagController extends Controller
         return response()->json([
             'code'=>200,
             'data' => $bags
-        ]);
+        ],200);
     }
 
     public function searchBagById($bagId)
@@ -98,12 +98,12 @@ class BagController extends Controller
                 'code'=>404,
                 'message' => 'The bag is not exist',
                 'data'=>[]
-            ]);
+            ],404);
         }
         return response()->json([
             'code'=>200,
             'data' => $bag
-        ]);
+        ],200);
     }
 
 }

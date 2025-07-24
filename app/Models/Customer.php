@@ -37,5 +37,8 @@ class Customer extends Model
         'subscription_expiry_date' => 'datetime',
     ];
 
-
+    public function bags()
+    {
+        return $this->hasMany(Bag::class);
+    }
 }

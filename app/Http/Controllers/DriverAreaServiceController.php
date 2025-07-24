@@ -29,19 +29,21 @@ class DriverAreaServiceController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
         $driverUser = User::find($request->driver_id);
 
         if (!$driverUser) {
             return response()->json([
                 'code'=>404,
-                'message' => 'Driver user not found.'
-            ]);
+                'message' => 'Driver user not found.',
+                'data'=>[]
+            ],404);
         }
 
         if (!$driverUser->hasRole('driver')) {
             return response()->json([
+                'code'=>403,
                 'message' => 'The assigned user does not have the driver role.'
             ], 403);
         }
@@ -69,9 +71,10 @@ class DriverAreaServiceController extends Controller
 
         if (!$area) {
             return response()->json([
-                'code'=>200,
+                'code'=>404,
                 'message' => 'Area not found',
-            ]);
+                'data'=>[]
+            ],404);
         }
         $validator = Validator::make($request->all(), [
             'name' => 'string',
@@ -81,7 +84,7 @@ class DriverAreaServiceController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
 
 
@@ -94,11 +97,8 @@ class DriverAreaServiceController extends Controller
                     'id'=>$area->id,
                     'area_name' => $area->name,
                     'diver_name' => $area->driver->first_name . ' ' . $area->driver->last_name,
-
-
                 ]
-            ]
-            , 200);
+            ], 200);
     }
     public function deleteArea($id)
     {
@@ -106,8 +106,10 @@ class DriverAreaServiceController extends Controller
 
         if (!$area) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Area not found',
-            ], 200);
+                'data'=>[]
+            ], 404);
         }
 
 
@@ -116,7 +118,7 @@ class DriverAreaServiceController extends Controller
         return response()->json([
             'code' => 200,
             'message' => 'Area deleted successfully ',
-        ]);
+        ],200);
 
     }
 //By All Or Name Or Driver
@@ -148,13 +150,15 @@ class DriverAreaServiceController extends Controller
 
         if ($data->isEmpty()) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Not Found Areas',
-            ], 200);
+                'data'=>[]
+            ], 404);
         }
         return response()->json([
                 'code' => 200,
                 'message' => 'All Areas',
-                'result' => [
+                'data' => [
                     'area' => $areas,
                 ]
             ]
@@ -166,7 +170,9 @@ class DriverAreaServiceController extends Controller
 
         if (!$area) {
             return response()->json([
+                'code'=>404,
                 'message' => 'Area not found',
+                'data'=>[]
             ], 404);
         }
         return response()->json([

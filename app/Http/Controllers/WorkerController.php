@@ -23,7 +23,7 @@ class WorkerController extends Controller
             return response()->json([
                 'code'=>404,
                 'message' => 'Phone number is incorrect or not registered.'
-            ]);
+            ],404);
         }
         $fullName = $userPhone->first_name . ' ' . $userPhone->last_name;
 
@@ -31,7 +31,7 @@ class WorkerController extends Controller
             return response()->json([
                 'code'=>422,
                 'message' => 'Full name is incorrect.'
-            ]);
+            ],422);
         }
 
 
@@ -47,7 +47,7 @@ class WorkerController extends Controller
         return response()->json([
             'code'=>200,
             'message' => 'Your request to change the password has been submitted to the restaurant management .Please wait until your request is approved'
-        ]);
+        ],200);
     }
 
 
@@ -62,7 +62,7 @@ class WorkerController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);}
+            ],422);}
 
         $bag = Bag::where('bag_id', $request->bag_id)->first();
 
@@ -71,7 +71,7 @@ class WorkerController extends Controller
                 'code' => 404,
                 'message' => 'Bag not found',
                 'data' => []
-            ]);
+            ],404);
         }
         $currentState = $bag->last_update_at;
         $scanType = $request->action;
@@ -83,7 +83,7 @@ class WorkerController extends Controller
                     return response()->json([
                         'code' => 400,
                         'message' => 'Bag is not in the store. Please scan check-in warehouse first.'
-                    ]);
+                    ],400);
                 }
                 $bag->last_update_at = 'atStore';
                 break;
@@ -94,7 +94,7 @@ class WorkerController extends Controller
                     return response()->json([
                         'code' => 400,
                         'message' => 'Bag is not ready for pickup by the driver.'
-                    ]);
+                    ],400);
                 }
                 $bag->last_update_at = 'atWay';
                 break;
@@ -105,7 +105,7 @@ class WorkerController extends Controller
                     return response()->json([
                         'code' => 400,
                         'message' => 'Bag is not on the way. Please scan check-in driver first.'
-                    ]);
+                    ],400);
                 }
                 $bag->last_update_at = 'atStore';
                 break;
@@ -116,7 +116,7 @@ class WorkerController extends Controller
                     return response()->json([
                         'code' => 400,
                         'message' => 'Bag is not on the way. Please scan check-in driver first.'
-                    ]);
+                    ],400);
                 }
                 $bag->last_update_at = 'atCustomer';
 
@@ -129,7 +129,7 @@ class WorkerController extends Controller
                     return response()->json([
                         'code' => 400,
                         'message' => ' Please wait until the driver scan check out '
-                    ]);
+                    ],400);
                 }
                 $bag->last_update_at = 'atStore';
                 break;
@@ -138,7 +138,7 @@ class WorkerController extends Controller
                 return response()->json([
                     'code' => 400,
                     'message' => 'Invalid scan type.'
-                ]);
+                ],400);
         }
 
         $bag->save();
@@ -150,9 +150,7 @@ class WorkerController extends Controller
             'customer_name' => $bag->customer->first_name . ' ' . $bag->customer->last_name,
             'newState'  => $bag->last_update_at,
                 ]
-        ]);
-
-
+        ],200);
     }
 
 }
