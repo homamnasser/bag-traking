@@ -9,6 +9,7 @@ use App\Http\Controllers\DriverAreaServiceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\MealController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\WorkerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,8 @@ Route::group([
     'middleware' => ['api', 'auth:sanctum'],
 ], function ($router) {
     Route::get('/getMyInfo', [AdminController::class,'getMyInfo']);
+    Route::post('/logout', [AuthController::class,'logout']);
+
 });
 
 
@@ -76,11 +79,15 @@ Route::group([
     Route::post('/updateFoodPrefer', [CustomerFoodPreferencesController::class,'updateFoodPrefer']);
     Route::delete('/deleteFoodPrefer', [CustomerFoodPreferencesController::class,'deleteFoodPrefer']);
     Route::get('/getCustomerFoodPreferences', [CustomerFoodPreferencesController::class,'getCustomerFoodPreferences']);
-
-
-
 });
 
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:customer'],
+    'prefix' => 'order'
+], function ($router) {
+    Route::post('/addOrder', [OrderController::class,'addOrder']);
+
+});
 
 
 Route::post('/register', [AuthController::class, 'register']);

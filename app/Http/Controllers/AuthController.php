@@ -107,5 +107,9 @@ class AuthController extends Controller
             'data' =>array_merge($userData, ['role' => $role],['token'=>$token])
         ],200);
     }
+    public function logout(Request $request) {
+        $request->user()->currentAccessToken()->delete();
 
+        return response()->json(['message' => 'User successfully signed out']);
+    }
 }

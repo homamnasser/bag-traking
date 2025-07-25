@@ -95,6 +95,8 @@ class RoleSeeder extends Seeder
            'updatePhoto',
            'forgetPassword',
            'getMyInfo',
+           'getAllOrders',
+
 
 
        ]);
@@ -116,6 +118,11 @@ class RoleSeeder extends Seeder
             'getCustomerFoodPreferences',
             'sendMessage',
             'getMyInfo',
+            'addOrder',
+            'deleteOrder',
+            'getOrder',
+            'updateOrder',
+
 
 
         ]);

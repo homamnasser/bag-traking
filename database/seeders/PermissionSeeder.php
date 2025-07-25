@@ -62,7 +62,14 @@ class PermissionSeeder extends Seeder
             'getMessage',
             'getMessageByType',
             'getAllMessages',
-            'respondRequest'
+            'respondRequest',
+            'addOrder',
+            'deleteOrder',
+            'getOrder',
+            'updateOrder',
+            'getAllOrders',
+            'getOrder',
+
         ];
 
         foreach ($permissions as $permission) {

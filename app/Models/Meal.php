@@ -16,4 +16,8 @@ class Meal extends Model
         'is_active',
         'imgs',
     ];
+    public function Orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }
