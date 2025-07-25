@@ -29,6 +29,7 @@ class PermissionSeeder extends Seeder
             'deleteUser',
             'getUser',
             'getAllUsers',
+            'getMyInfo',
             'addArea',
             'updateArea',
             'deleteArea',

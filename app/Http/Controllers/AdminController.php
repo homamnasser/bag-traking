@@ -26,7 +26,7 @@ class AdminController extends Controller
          'last_name'  => 'required|string|max:55',
          'phone'      => ['required', 'unique:users,phone','regex:/^\+9715[0,2-8]\d{7}$/'],
          'password'   => 'required|string|min:6|confirmed',
-         'role'       => 'required|string|in:admin,admin_cook,driver,store_employee',
+         'role'       => 'required|string|in:admin,admin_cook,driver,store_employee,customer',
          'image.*' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
           ],[
          'phone.unique' => 'the phone already exist',
@@ -254,6 +254,29 @@ class AdminController extends Controller
             'code'=> 200,
             'message' => 'Users retrieved successfully.',
             'data' => $allUsers,
+        ],200);
+    }
+    public function getMyInfo()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'code'=>401,
+                'message' => 'Unauthenticated. Please log in.'
+            ], 401);
+        }
+        return response()->json([
+            'code'=> 200,
+            'message' => 'My info',
+            'data' => [
+                'id'=> $user->id,
+                'first_name'=> $user->first_name,
+                'last_name'=>$user->last_name,
+                'phone'=> $user->phone,
+                'role'=> $user->getRoleNames()->first(),
+                'image'=>$user->image
+            ]
         ],200);
     }
 

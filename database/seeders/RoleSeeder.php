@@ -42,7 +42,8 @@ class RoleSeeder extends Seeder
             'getMessage',
             'getMessageByType',
             'getAllMessages',
-            'respondRequest'
+            'respondRequest',
+            'getMyInfo',
 
 
 
@@ -73,7 +74,9 @@ class RoleSeeder extends Seeder
             'getMessage',
             'getMessageByType',
             'getAllMessages',
-            'respondRequest'
+            'respondRequest',
+            'getMyInfo',
+
         ]);
 
        $driver= Role::create(['name' => 'driver']);
@@ -90,13 +93,18 @@ class RoleSeeder extends Seeder
            'getMeal',
            'getAllMeal',//search
            'updatePhoto',
-           'forgetPassword'
+           'forgetPassword',
+           'getMyInfo',
+
+
        ]);
 
        $store_employee= Role::create(['name' => 'store_employee']);
        $store_employee->givePermissionTo([
           'forgetPassword',
-           'sendMessage'
+           'sendMessage',
+           'getMyInfo',
+
 
        ]);
 
@@ -106,7 +114,9 @@ class RoleSeeder extends Seeder
             'updateFoodPreferences',
             'deleteFoodPreferences',
             'getCustomerFoodPreferences',
-            'sendMessage'
+            'sendMessage',
+            'getMyInfo',
+
 
         ]);
 
