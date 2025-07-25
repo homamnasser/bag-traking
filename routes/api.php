@@ -46,7 +46,7 @@ Route::group([
 Route::group([
     'middleware' => ['api', 'auth:sanctum'],
 ], function ($router) {
-    Route::post('/getMyInfo', [AdminController::class,'getMyInfo']);
+    Route::get('/getMyInfo', [AdminController::class,'getMyInfo']);
 });
 
 
