@@ -43,6 +43,7 @@ Route::group([
 ], function ($router) {
     Route::post('/forgetPassword', [WorkerController::class,'forgetPassword']);
 });
+
 Route::group([
     'middleware' => ['api', 'auth:sanctum'],
 ], function ($router) {
