@@ -38,4 +38,9 @@ class Bag extends Model
 
         return $randomId;
     }
+
+    public function ScanLog()
+    {
+        return $this->hasMany(Scan_Log::class);
+    }
 }

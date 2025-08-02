@@ -11,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('scan__logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-
-            $table->unsignedBigInteger('meal1_id');
-            $table->foreign('meal1_id')->references('id')->on('meals')->onDelete('cascade');
-
-            $table->unsignedBigInteger('meal2_id')->nullable();
-            $table->foreign('meal2_id')->references('id')->on('meals')->onDelete('cascade');
-
-            $table->date('order_date');
+            $table->unsignedBigInteger('bag_id');
+            $table->foreign('bag_id')->references('id')->on('bags')->onDelete('cascade');
+            $table->date('date');
+            $table->time('time');
+            $table->string('status');
             $table->timestamps();
         });
     }
@@ -32,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('scan__logs');
     }
 };

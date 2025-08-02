@@ -65,10 +65,12 @@ class PermissionSeeder extends Seeder
             'respondRequest',
             'addOrder',
             'deleteOrder',
-            'getOrder',
             'updateOrder',
-            'getAllOrders',
+            'getTodayOrders',
             'getOrder',
+            'getMyOrders',
+            'report',
+            'countBags',
 
         ];
 
