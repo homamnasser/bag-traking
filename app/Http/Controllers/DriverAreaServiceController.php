@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\DriverAreaService;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -78,6 +79,9 @@ class DriverAreaServiceController extends Controller
         }
         $validator = Validator::make($request->all(), [
             'name' => 'string',
+            'driver_id'=>'integer|exists:users,id'
+        ],[
+            'driver_id.exists'=>'driver is not exist in the system'
         ]);
 
         if ($validator->fails()) {
@@ -87,6 +91,14 @@ class DriverAreaServiceController extends Controller
             ],422);}
 
 
+        $driverUser = User::find($request->driver_id);
+
+        if (!$driverUser->hasRole('driver')) {
+            return response()->json([
+                'code'=>403,
+                'message' => 'The assigned user does not have the driver role.'
+            ], 403);
+        }
 
         $area->update($request->all());
 
@@ -111,7 +123,14 @@ class DriverAreaServiceController extends Controller
                 'data'=>[]
             ], 404);
         }
+        $hasCustomers = Customer::where('area_id', $id)->exists();
 
+        if ($hasCustomers) {
+            return response()->json([
+                'code' => 422,
+                'message' => 'Cannot delete area because it is assigned to one or more customers.',
+            ], 422);
+        }
 
         $area->delete();
 

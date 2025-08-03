@@ -69,6 +69,8 @@ class PermissionSeeder extends Seeder
             'updateOrder',
             'getAllOrders',
             'getOrder',
+            'getCustomerForDriver',
+            'deleteImage'
 
         ];
 

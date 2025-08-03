@@ -8,6 +8,7 @@ use App\Models\DriverAreaService;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -37,6 +38,7 @@ class CustomerController extends Controller
 
     public function addCustomer(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:55',
             'last_name' => 'required|string|max:55',
@@ -120,9 +122,11 @@ class CustomerController extends Controller
                     'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
                     'subscription_status'=> $customer->subscription_status,
                     'bags_assigned' => $bags->pluck('bag_id'),
-                    'qr_urls' => $qrUrls
+                    'qr_urls' => $qrUrls,
+
                 ]
             ],201);
+
     }
 
     public function updateCustomer(Request $request, $id)
@@ -199,38 +203,51 @@ class CustomerController extends Controller
             $customer->address = $request->address;
         }
 
-       /* if ($request->has('old_bag_id')) {
+        $qrUrls = [];
+        if ($request->has('old_bag_id')) {
+
             $oldBag = Bag::where('bag_id', $request->old_bag_id)
                 ->where('customer_id', $customer->id)
                 ->first();
 
-            if ($oldBag) {
-                $oldBag->update([
-                        'customer_id' => null,
-                        'status' => 'available',
-                        'qr_code_path' => null,
-                    ]);
-
-            $newBag = Bag::whereNull('customer_id')
-                ->where('status', 'available')
+            if (!$oldBag) {
+                return response()->json([
+                    'code'=>422,
+                    'message' => 'The old bag does not belong to this customer',
+                    'data'=>[]
+                ],422);
+            }
+            $newBag = Bag::where('status', 'available')
                 ->inRandomOrder()
                 ->first();
 
             if (!$newBag) {
-                return response()->json(['message' => 'No available bags found'], 404);
+                return response()->json([
+                    'code'=>422,
+                    'message' => 'No available bags found in the system',
+                    'data'=>[]
+                ],422);
             }
 
-            $this->generateBagQr($newBag, $user, $customer);
+            Storage::disk('public')->delete($oldBag->qr_code_path);
+            $oldBag->update([
+                'customer_id' => null,
+                'status' => 'available',
+                'qr_code_path' => null,
+                'last_update_at'=>'at_store'
+            ]);
+
+            $qrUrl = $this->generateBagQr($newBag, $user, $customer);
+            $qrUrls[$newBag->bag_id] = $qrUrl;
         }
 
-        $qrUrls = Bag::where('customer_id', $customer->id)
-            ->whereNotNull('qr_code_path')
-            ->get('qr_code_path')
-            ->map(function($bag) {
-                return asset('storage/' . $bag->qr_code_path);
-            });
-*/
         $customer->save();
+
+        $bags = $customer->bags()->get();
+        $qrUrls = [];
+        foreach ($bags as $bag) {
+            $qrUrls[$bag->bag_id] = asset('storage/' . $bag->qr_code_path);
+        }
 
         return response()->json([
                 'code' => 200,
@@ -242,8 +259,8 @@ class CustomerController extends Controller
                     'image'=>$user->image,
                     'area'=> $customer->area->name,
                     'address'=> $customer->address,
-                    //'bags_assigned' => $customer->bags()->pluck('bag_id'),
-                    //'qr_urls' => $qrUrls
+                    'bags_assigned' => $bags->pluck('bag_id'),
+                    'qr_urls' => $qrUrls
                 ]
             ],200);
     }

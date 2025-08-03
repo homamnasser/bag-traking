@@ -151,6 +151,32 @@ class AdminController extends Controller
             ]
         ],200);
     }
+
+       public function deleteImage($user_id){
+
+        $user=User::find($user_id);
+
+           if (!$user) {
+               return response()->json([
+                   'code'=>404,
+                   'message' => 'User not found',
+                   'data'=>[]
+               ],404);
+           }
+           if ($user->image) {
+               $imagePath = str_replace(asset('storage/'), '', $user->image);
+               Storage::disk('public')->delete($imagePath);
+
+               $user->update(['image' => null]);
+           }
+
+           return response()->json([
+               'code'=>200,
+               'message'=>'image delete successfully',
+
+           ],200);
+       }
+
     public function deleteUser($id)
     {
         $user = User::find($id);
@@ -188,6 +214,7 @@ class AdminController extends Controller
     }
     public function getUser($id)
     {
+        $currentUser = auth()->user();
         $user = User::find($id);
 
         if (!$user) {
@@ -197,6 +224,14 @@ class AdminController extends Controller
                 'data'=>[]
             ], 404);
         }
+
+        if(!$currentUser->hasRole('super_admin')&&$id==1){
+            return response()->json([
+                'code'=>422,
+                'message' => 'only super admin can view super admin account ',
+            ], 422);
+
+        }
         return response()->json([
                 'code'=> 200,
                 'message' => 'This is User ',
@@ -204,7 +239,6 @@ class AdminController extends Controller
                     'id'=> $user->id,
                     'name'=> $user->first_name.' '.$user->last_name,
                     'phone'=> $user->phone,
-                    'password'=>$user->password,   ///////////////////////////////
                     'is_active'=>$user->is_active,
                     'role'=> $user->getRoleNames()->first(),
                     'image'=>$user->image
@@ -215,22 +249,30 @@ class AdminController extends Controller
 //first/last name phone role/active
     public function getAllUsers($request)
     {
+        $currentUser = auth()->user();
+
         if ($request == "all") {
-            $users = User::all();
+            $users = User::query();
 
         }
-
         else
         {
-            $users = User::where('phone',  $request)
-            ->orWhere('first_name', $request )
-            ->orWhere('last_name',  $request )
+            $users = User::where(function ($q) use ($request) {
+                $q->where('phone',  $request)
+                ->orWhere('first_name', $request )
+                ->orWhere('last_name',  $request )
                 ->orWhere('is_active', (in_array($request, ['0', '1']) ? (int) $request : -1))
-            ->orWhereHas('roles', function ($query) use ($request) {
-             $query->where('name',  $request );
-        })
-        ->get();
+                ->orWhereHas('roles', function ($query) use ($request) {
+                    $query->where('name',  $request );
+                });
+            });
         }
+        if ($currentUser-> id !== 1) {
+            $users->where('id', '!=', 1);
+        }
+
+        $users = $users->get();
+
         if ($users->isEmpty()) {
             return response()->json([
                 'code'=>404,
@@ -256,6 +298,8 @@ class AdminController extends Controller
             'data' => $allUsers,
         ],200);
     }
+
+
     public function getMyInfo()
     {
         $user = Auth::user();

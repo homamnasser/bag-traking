@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use  App\Models\Bag;
+use App\Models\Customer;
 use App\Models\User;
+use http\Env\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -147,10 +149,56 @@ class WorkerController extends Controller
             'message'=>'Scan processed successfully',
             'data'=>[
             'bag_id' => $bag->bag_id,
-            'customer_name' => $bag->customer->first_name . ' ' . $bag->customer->last_name,
+            'customer_name' => $bag->customer->user->first_name . ' ' . $bag->customer->user->last_name,
             'newState'  => $bag->last_update_at,
                 ]
         ],200);
     }
 
+
+    
+   public function  getCustomerForDriver($id){
+
+       $driver =User::with('areas')->find($id);
+
+       if (!$driver ||$driver->areas->isEmpty()) {
+           return response()->json([
+               'code' => 404,
+               'message' => 'Driver or Area not found'
+           ], 404);
+       }
+
+       if (!$driver->hasRole('driver')) {
+           return response()->json([
+               'code' => 403,
+               'message' => 'User does not have role driver'
+           ], 403);
+       }
+       $areaIds = $driver->areas->pluck('id');
+       $customers = Customer::with('user', 'bags')
+           ->whereIn('area_id', $areaIds)
+           ->whereHas('user', function ($query) {
+               $query->where('is_active', 1);
+           })
+           ->get();
+
+
+       $allCustomer = $customers->map(function ($customer) use ($driver){
+        $reservedBags = $customer->bags->where('last_update_at', 'atCustomer')->pluck('bag_id');
+           return [
+               'id_customer' => $customer->id,
+               'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+               'address' => $customer->address,
+               'phone' => $customer->user->phone,
+               'driverName' => $driver->first_name . ' ' . $driver->last_name,
+               'reservedBags' => $reservedBags,
+               'bags' => $customer->bags->pluck('bag_id'),
+           ];
+       });
+
+       return response()->json([
+           'code' => 200,
+           'data' => $allCustomer
+       ],200);
+   }
 }

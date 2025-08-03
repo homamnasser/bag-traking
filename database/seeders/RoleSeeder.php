@@ -44,7 +44,7 @@ class RoleSeeder extends Seeder
             'getAllMessages',
             'respondRequest',
             'getMyInfo',
-
+            'deleteImage'
 
 
         ]);
@@ -76,13 +76,15 @@ class RoleSeeder extends Seeder
             'getAllMessages',
             'respondRequest',
             'getMyInfo',
+            'deleteImage'
 
         ]);
 
        $driver= Role::create(['name' => 'driver']);
        $driver->givePermissionTo([
            'forgetPassword',
-           'sendMessage'
+           'sendMessage',
+           'getCustomerForDriver'
 
        ]);
        $admin_cook= Role::create(['name' => 'admin_cook']);
