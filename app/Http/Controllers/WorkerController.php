@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use  App\Models\Bag;
 use App\Models\Customer;
+use App\Models\Scan_Log;
 use App\Models\User;
 use http\Env\Response;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class WorkerController extends Controller
@@ -53,8 +56,9 @@ class WorkerController extends Controller
     }
 
 
-    public function scanQr(Request $request){
-
+    public function scanQr(Request $request)
+    {
+        $user=Auth::user();
         $validator=validator::make($request->all(), [
             'action'=>'required|string|in:check_in_warehouse,check_out_warehouse,check_in_driver,check_out_driver,delivered',
             'bag_id' => 'required|exists:bags,bag_id',
@@ -144,6 +148,18 @@ class WorkerController extends Controller
         }
 
         $bag->save();
+        Scan_Log::create([
+            'user_id' => $user->id,
+            'bag_id' => $bag->id,
+
+            'date' => Carbon::now()->toDateString(),
+            'time' => Carbon::now()->toTimeString(),
+            'status' => $bag->last_update_at,
+        ]);
+        $customerFirstName = optional(optional($bag->customer)->user)->first_name;
+        $customerLastName = optional(optional($bag->customer)->user)->last_name;
+        $customerFullName = trim($customerFirstName . ' ' . $customerLastName);
+
         return response()->json([
             'code'=>200,
             'message'=>'Scan processed successfully',
@@ -156,7 +172,7 @@ class WorkerController extends Controller
     }
 
 
-    
+
    public function  getCustomerForDriver($id){
 
        $driver =User::with('areas')->find($id);

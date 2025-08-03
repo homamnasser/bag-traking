@@ -44,7 +44,10 @@ class RoleSeeder extends Seeder
             'getAllMessages',
             'respondRequest',
             'getMyInfo',
-            'deleteImage'
+            'deleteImage',
+            'report',
+            'countBags',
+
 
 
         ]);
@@ -76,7 +79,9 @@ class RoleSeeder extends Seeder
             'getAllMessages',
             'respondRequest',
             'getMyInfo',
-            'deleteImage'
+            'deleteImage',
+            'report',
+            'countBags',
 
         ]);
 
@@ -97,7 +102,9 @@ class RoleSeeder extends Seeder
            'updatePhoto',
            'forgetPassword',
            'getMyInfo',
-           'getAllOrders',
+           'getTodayOrders',
+           'getOrder',
+
 
 
 
@@ -124,6 +131,7 @@ class RoleSeeder extends Seeder
             'deleteOrder',
             'getOrder',
             'updateOrder',
+            'getMyOrders',
 
 
 

@@ -67,10 +67,13 @@ class PermissionSeeder extends Seeder
             'deleteOrder',
             'getOrder',
             'updateOrder',
-            'getAllOrders',
+            'getTodayOrders',
             'getOrder',
             'getCustomerForDriver',
-            'deleteImage'
+            'deleteImage',
+            'getMyOrders',
+            'report',
+            'countBags',
 
         ];
 

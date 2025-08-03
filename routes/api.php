@@ -10,6 +10,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\MealController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\WorkerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -81,9 +82,22 @@ Route::group([
     'prefix' => 'order'
 ], function ($router) {
     Route::post('/addOrder', [OrderController::class,'addOrder']);
+    Route::post('/updateOrder/{id}', [OrderController::class,'updateOrder']);
+    Route::delete('/deleteOrder/{id}', [OrderController::class,'deleteOrder']);
+    Route::get('/getMyOrders', [OrderController::class,'getMyOrders']);
+
 
 });
 
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:customer|admin_cook'],
+    'prefix' => 'order'
+], function ($router) {
+
+    Route::get('/getOrder/{id}', [OrderController::class,'getOrder']);
+
+
+});
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/loginUser', [AuthController::class, 'loginUser']);
@@ -104,6 +118,8 @@ Route::group([
     Route::get('/getMessage/{id}', [MessageController::class,'getMessage']);
     Route::get('/getAllMessages', [MessageController::class,'getAllMessages']);
     Route::get('/getMessageByType/{type}', [MessageController::class,'getMessageByType']);
+    Route::post('/report', [ReportController::class,'report']);
+
 });
 
 
@@ -118,6 +134,7 @@ Route::group([
     Route::post('/updatePhoto/{id}', [MealController::class,'updatePhoto']);
     Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
 
+
 });
 
     Route::group([
@@ -127,7 +144,7 @@ Route::group([
         Route::post('/addBag', [BagController::class,'addBag']);
         Route::delete('/deleteBag/{id}',[BagController::class,'deleteBag']);
         Route::get('/getAllBags',[BagController::class,'getAllBags']);
-        Route::get('/getBagByStatus/{status}', [BagController::class,'getBagsByStatus']);
+        Route::get('/getBagByStatus/{request}', [BagController::class,'getBagsByStatus']);
         Route::get('/searchBagById/{id}', [BagController::class,'searchBagById']);
     });
 
@@ -145,7 +162,11 @@ Route::group([
            ->middleware('role:driver|store_employee');
    });
 
-
+Route::group([
+    'middleware' => ['api','auth:sanctum','role:admin_cook'],
+], function ($router) {
+    Route::get('/getTodayOrders', [OrderController::class,'getTodayOrders']);
+});
 
 
 

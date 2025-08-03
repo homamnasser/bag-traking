@@ -66,29 +66,42 @@ class BagController extends Controller
         ],200);
     }
 
-    public function getAllBags(){
-        $bags = Bag::get();
-
-        return response()->json([
-            'code'=>200,
-            'data' => $bags
-        ],200);
-    }
-    public function getBagsByStatus($status)
+    public function getBagsByStatus($request)
     {
-        if (!in_array($status, ['available', 'unavailable'])) {
-            return response()->json([
-                'code'=>400,
-                'message' => 'Invalid status. Use available or unavailable.'
-            ],400);
-        }
-        $bags = Bag::where('status',$status)
-            ->get();
+        if ($request == "all") {
+            $bags = Bag::all();
+        } else {
+            $bags = Bag::where('status', $request)
+                ->orWhere('last_update_at', $request)
+                ->get();
 
+        }
+        $allBags = $bags->map(function ($bag) {
+            return [
+                'id' => $bag->id,
+                'status' => $bag->status,
+                'customer' => $bag->customer?->user?->first_name. ' ' . $bag->customer?->user?->last_name,
+                'qr_code_path' => $bag->qr_code_path,
+                'last_update_at' => $bag->last_update_at,
+
+            ];
+        });
+        if ($allBags->isEmpty()) {
+            return response()->json([
+                'code'=>404,
+                'message' => 'Not Found Bags',
+                'data'=>[]
+            ], 404);
+        }
         return response()->json([
-            'code'=>200,
-            'data' => $bags
-        ],200);
+                'code' => 200,
+                'message' => 'Bags retrieved successfully.',
+                'data' => [
+                    'meal' => $allBags,
+                ]
+            ]
+            , 200);
+
     }
 
     public function searchBagById($bagId)
