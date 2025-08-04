@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\DriverAreaService;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class DriverAreaServiceController extends Controller
@@ -46,6 +47,12 @@ class DriverAreaServiceController extends Controller
             return response()->json([
                 'code'=>403,
                 'message' => 'The assigned user does not have the driver role.'
+            ], 403);
+        }
+        if ($driverUser->is_active !=1) {
+            return response()->json([
+                'code'=>403,
+                'message' => 'The driver account is not yet activated'
             ], 403);
         }
 
@@ -91,13 +98,15 @@ class DriverAreaServiceController extends Controller
             ],422);}
 
 
-        $driverUser = User::find($request->driver_id);
+        if ($request->filled('driver_id')) {
+            $driverUser = User::find($request->driver_id);
 
-        if (!$driverUser->hasRole('driver')) {
-            return response()->json([
-                'code'=>403,
-                'message' => 'The assigned user does not have the driver role.'
-            ], 403);
+            if (!$driverUser || !$driverUser->hasRole('driver')) {
+                return response()->json([
+                    'code' => 403,
+                    'message' => 'The assigned user does not have the driver role.'
+                ], 403);
+            }
         }
 
         $area->update($request->all());
@@ -153,7 +162,8 @@ class DriverAreaServiceController extends Controller
             $data = DriverAreaService::where('name', $request)
                 ->orWhereHas('driver', function ($query) use ($request) {
                     $query->where('first_name',  $request )
-                        ->orWhere('last_name',  $request);
+                        ->orWhere('last_name',  $request)
+                       ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', "%{$request}%");
                 })
                 ->get();
 

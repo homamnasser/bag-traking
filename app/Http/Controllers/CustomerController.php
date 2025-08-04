@@ -8,6 +8,7 @@ use App\Models\DriverAreaService;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -234,7 +235,7 @@ class CustomerController extends Controller
                 'customer_id' => null,
                 'status' => 'available',
                 'qr_code_path' => null,
-                'last_update_at'=>'at_store'
+                'last_update_at'=>'atStore'
             ]);
 
             $qrUrl = $this->generateBagQr($newBag, $user, $customer);
@@ -329,7 +330,7 @@ class CustomerController extends Controller
         public function getCustomerByStatus($request){
             $query = Customer::with(['user', 'area.driver', 'bags']);
 
-            if ($request != "all") {
+            if ($request != "all" && $request!="is_active") {
                 $query->where('subscription_status', $request);
             }
 
@@ -379,12 +380,6 @@ class CustomerController extends Controller
     {
         $customer = Customer::with('user', 'area.driver','bags')->find($id);
 
-        $bags = $customer->bags;
-
-        $qrUrls = $bags->map(function($bag) {
-            return $bag->qr_code_path ? asset('storage/' . $bag->qr_code_path) : null;
-        });
-
         if (!$customer) {
             return response()->json([
                 'code'=>404,
@@ -392,6 +387,14 @@ class CustomerController extends Controller
                 'data'=>[]
             ],404);
         }
+
+        $bags = $customer->bags;
+
+        $qrUrls = $bags->map(function($bag) {
+            return $bag->qr_code_path ? asset('storage/' . $bag->qr_code_path) : null;
+        });
+
+
 
         $customerMap = [
             'id' => $customer->id,
@@ -419,4 +422,57 @@ class CustomerController extends Controller
             ]
         ],200);
     }
+
+    public function getCustomerInfo()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'code' => 401,
+                'message' => 'Unauthenticated. Please log in.'
+            ], 401);
+        }
+
+        if(!$user->hasRole('customer')){
+            return response()->json([
+                'code' => 403,
+                'message' => 'Access denied. Only customers can access this resource'
+            ],403 );
+        }
+
+        $customer = Customer::with(['area.driver', 'bags'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$customer) {
+            return response()->json([
+                'code' => 404,
+                'message' => 'Customer profile not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'code' => 200,
+            'message' => 'My info',
+            'data' => [
+                'id' => $customer->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+                'role' => $user->getRoleNames()->first(),
+                'is_active' => $user->is_active,
+                'address' => $customer->address,
+                'area' => optional($customer->area)->name,
+                'driverName' => optional($customer->area->driver)->first_name . ' ' . optional($customer->area->driver)->last_name,
+                'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
+                'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
+                'subscription_status' => $customer->subscription_status,
+                'bags_assigned' => $customer->bags->pluck('bag_id'),
+            ]
+        ], 200);
+    }
+
+
 }

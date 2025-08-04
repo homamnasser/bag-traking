@@ -47,6 +47,9 @@ Route::group([
     Route::get('/getMyInfo', [AdminController::class,'getMyInfo']);
     Route::post('/logout', [AuthController::class,'logout']);
 
+    Route::get('/getCustomerInfo', [CustomerController::class,'getCustomerInfo'])
+        ->middleware('role:customer');
+
 });
 
 
@@ -85,6 +88,7 @@ Route::group([
     Route::post('/updateOrder/{id}', [OrderController::class,'updateOrder']);
     Route::delete('/deleteOrder/{id}', [OrderController::class,'deleteOrder']);
     Route::get('/getMyOrders', [OrderController::class,'getMyOrders']);
+
 
 
 });

@@ -79,6 +79,20 @@ class WorkerController extends Controller
                 'data' => []
             ],404);
         }
+
+        if ($request->has('first_name') || $request->has('last_name')) {
+            $ownerFirst = strtolower(isset($bag->customer->user->first_name) ? $bag->customer->user->first_name : '');
+            $ownerLast  = strtolower(isset($bag->customer->user->last_name) ? $bag->customer->user->last_name : '');
+
+            if (strtolower($request->first_name) !== $ownerFirst ||
+                strtolower($request->last_name) !== $ownerLast) {
+                return response()->json([
+                    'code' => 403,
+                    'message' => 'The bag owner information does not match.'
+                ], 403);
+            }
+        }
+
         $currentState = $bag->last_update_at;
         $scanType = $request->action;
 

@@ -60,6 +60,13 @@ class MessageController extends Controller
         $message = Message::find($request->message_id);
         $user = User::find($message->user_id);
 
+        if($message->status!='pending'){
+            return response()->json([
+                'code' => 422,
+                'message' => 'This message has already been responded to',
+            ],422);
+        }
+
          if($request->action ==='approved'){
 
              if($message->type==='account_creation'){

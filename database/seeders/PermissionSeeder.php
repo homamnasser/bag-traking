@@ -74,6 +74,7 @@ class PermissionSeeder extends Seeder
             'getMyOrders',
             'report',
             'countBags',
+            'getCustomerInfo'
 
         ];
 

@@ -50,6 +50,7 @@ class RoleSeeder extends Seeder
 
 
 
+
         ]);
         $admin=Role::create(['name' => 'admin']);
         $admin->givePermissionTo([
@@ -82,6 +83,7 @@ class RoleSeeder extends Seeder
             'deleteImage',
             'report',
             'countBags',
+
 
         ]);
 
@@ -132,7 +134,7 @@ class RoleSeeder extends Seeder
             'getOrder',
             'updateOrder',
             'getMyOrders',
-
+            'getCustomerInfo'
 
 
         ]);

@@ -271,6 +271,10 @@ class AdminController extends Controller
             $users->where('id', '!=', 1);
         }
 
+        $users->whereDoesntHave('roles', function ($q) {
+            $q->where('name', 'customer');
+        });
+
         $users = $users->get();
 
         if ($users->isEmpty()) {
