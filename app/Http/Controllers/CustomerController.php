@@ -330,7 +330,7 @@ class CustomerController extends Controller
         public function getCustomerByStatus($request){
             $query = Customer::with(['user', 'area.driver', 'bags']);
 
-            if ($request != "all" && $request!="is_active") {
+            if ($request != "all" ) {
                 $query->where('subscription_status', $request);
             }
 
