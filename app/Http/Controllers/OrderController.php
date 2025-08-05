@@ -14,10 +14,19 @@ class OrderController extends Controller
     public function addOrder(Request $request)
     {
         $user = Auth::user();
+
+        $customer = $user->customer;
+
+        if (!$customer || $customer->subscription_status == 0) {
+            return response()->json([
+                'code' => 403,
+                'message' => 'Your subscription is inactive. You cannot place an order.',
+            ], 403);
+        }
         $today = Carbon::today()->toDateString();
 
         $existingOrdersCount = Order::where('user_id', $user->id)
-            ->whereDate('order_date', $today) 
+            ->whereDate('order_date', $today)
             ->count();
 
         if ($existingOrdersCount >= 1) {
@@ -40,7 +49,7 @@ class OrderController extends Controller
         ], [
 
             'meal1_id.*.exists' => 'The specified meal does not exist in the system.',
-                        'meal2_id.*.exists' => 'The specified meal does not exist in the system.'
+            'meal2_id.*.exists' => 'The specified meal does not exist in the system.'
 
         ]);
         if ($validator->fails()) {
@@ -49,30 +58,8 @@ class OrderController extends Controller
                 'message' => $validator->errors()->first(),
             ], 422);
         }
-
-
-        $order = Order::create([
-            'user_id' => $user->id,
-            'meal1_id' => $request->meal1_id,
-            'meal2_id' => $request->meal2_id,
-            'order_date' => Carbon::now()
-        ]);
-
-        return response()->json([
-                'code' => 201,
-                'message' => 'order added successfully ',
-                'data' =>
-                    [
-                        'id' => $order->id,
-                        'meal1' => $order->meal1?->name,
-                        'meal2' => $order->meal2?->name,
-                        'order_date' => $order->order_date->toDateString(),
-                    ]
-            ]
-            , 201);
     }
-
-    public function updateOrder(Request $request, $id)
+        public function updateOrder(Request $request, $id)
     {
         $currentTime = Carbon::now();
         $limitHour = 2;

@@ -260,56 +260,66 @@ class CustomerController extends Controller
                 'data'=>[]
             ],404);
         }
+
         $validator = Validator::make($request->all(), [
             'subscription_status' => 'required|in:0,1',
-
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ],422);}
+            ],422);
+        }
 
         $newStatus = (int) $request->subscription_status;
-
 
         $updateData = [
             'subscription_status' => $newStatus,
         ];
 
-        if($request->subscription_status == 1) {
-            if ($customer->subscription_status == 1) {
-                $newExpiryDate = $customer->subscription_expiry_date->copy()->addMonth();
+        if ($newStatus == 1) {
+            // إذا حالة الاشتراك 0 وتاريخ الانتهاء أكبر من اليوم، لا نغير التواريخ
+            if (!($customer->subscription_status == 0
+                && $customer->subscription_expiry_date
+                && $customer->subscription_expiry_date->gt(Carbon::today())
+            )) {
+                if ($customer->subscription_status == 1) {
+                    $newExpiryDate = $customer->subscription_expiry_date->copy()->addMonth();
+                    $updateData['subscription_expiry_date'] = $newExpiryDate;
+                }
+                if ($customer->subscription_status == 0) {
+                    $newStartDate = Carbon::now();
+                    $newExpiryDate = $newStartDate->copy()->addMonth();
 
-                $updateData['subscription_expiry_date'] = $newExpiryDate;
-            }
-            if ($customer->subscription_status == 0) {
-
-                $newStartDate = Carbon::now();
-                $newExpiryDate = $newStartDate->copy()->addMonth();
-
-
-                $updateData['subscription_start_date'] = $newStartDate;
-                $updateData['subscription_expiry_date'] = $newExpiryDate;
+                    $updateData['subscription_start_date'] = $newStartDate;
+                    $updateData['subscription_expiry_date'] = $newExpiryDate;
+                }
             }
         }
-            $customer->update($updateData);
+
+        $customer->update($updateData);
+
+        $customer->user->update([
+            'is_active' => $newStatus,
+        ]);
 
         return response()->json([
-                'code' => 200,
-                'message' => 'Customer updated successfully ',
-                'data' => [
-                    'id'=> $customer->id,
-                    'name'=> $customer->user->first_name.' '.$customer->user->last_name,
-                    'subscription_start_date' => $customer->subscription_start_date->toDateString(),
-                    'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
-                ]
-            ],200);
+            'code' => 200,
+            'message' => 'Customer updated successfully ',
+            'data' => [
+                'id'=> $customer->id,
+                'name'=> $customer->user->first_name.' '.$customer->user->last_name,
+                'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
+                'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
+                'is_active' => $customer->user->is_active,
+            ]
+        ],200);
     }
 
 
-        public function getCustomerByStatus($request){
+
+    public function getCustomerByStatus($request){
             $query = Customer::with(['user', 'area.driver', 'bags']);
 
             if ($request != "all") {
