@@ -3,85 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Password Reset Code</title>
-    <style>
-        body {
-            background-color: #f2f3f8;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .email-container {
-            max-width: 600px;
-            margin: auto;
-            background: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-        }
-        .email-header {
-            background-color: #20e277;
-            padding: 20px;
-            text-align: center;
-        }
-        .email-header img {
-            width: 80px;
-        }
-        .email-body {
-            padding: 30px;
-            text-align: center;
-        }
-        .email-body h1 {
-            color: #333333;
-        }
-        .reset-code {
-            display: inline-block;
-            background: #f2f3f8;
-            color: #111111;
-            font-size: 28px;
-            letter-spacing: 4px;
-            font-weight: bold;
-            padding: 12px 24px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border: 2px dashed #20e277;
-        }
-        .email-footer {
-            background-color: #f2f3f8;
-            text-align: center;
-            padding: 15px;
-            font-size: 12px;
-            color: #888888;
-        }
-    </style>
 </head>
-<body>
+<body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color: #f2f3f8;">
 
-<div class="email-container">
+<div style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+
     <!-- Header -->
-    <div class="email-header">
-        <img src="{{ asset('images/images_1754300066_68907ea24a1cb.png') }}"
-             alt="App Logo"
-             style="width: 80px; height: auto; display: block; margin: 0 auto;">
+    <div style="padding:20px; text-align:center;">
+        <h1 style="color:#20e277; font-weight:700; margin:0; font-size:28px; font-family: 'Arial Black', Arial, sans-serif;">
+            BE HEALTHY
+        </h1>
     </div>
 
     <!-- Body -->
-    <div class="email-body">
-        <h1>Password Reset Request</h1>
-        <p>Hello, we received a request to reset your password.</p>
-        <p>Please use the code below to proceed. The code is valid for <strong>5 minutes</strong>.</p>
+    <div style="padding:30px; text-align:center;">
+        <h1 style="color:#333333; margin-top:0;">Password Reset Request</h1>
+        <p style="color:#000000; margin:0;">Hello, we received a request to reset your password.</p>
+        <p style="color:#000000; margin:0;">Please use the code below to proceed. The code is valid for
+            <strong style="color:#20e277;">5 minutes</strong>.
+        </p>
 
         <!-- Reset Code -->
-        <div class="reset-code">
+        <div style="display:inline-block; background:#f2f3f8; color:#111111; font-size:28px; letter-spacing:4px; font-weight:bold; padding:12px 24px; border-radius:8px; margin:20px 0; border:2px dashed #20e277;">
             {{ $code }}
         </div>
 
-        <p>If you didn’t request this, you can ignore this email.</p>
+        <p style="color:#000000;">If you didn’t request this, you can ignore this email.</p>
     </div>
 
     <!-- Footer -->
-    <div class="email-footer">
+    <div style="background-color:#f2f3f8; text-align:center; padding:15px; font-size:12px; color:#000000;">
         &copy; {{ date('Y') }} BE HEALTHY. All rights reserved.
     </div>
+
 </div>
 
 </body>
