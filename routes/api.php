@@ -40,17 +40,15 @@ Route::group([
 
 });
 
-Route::group([
-    'middleware' => ['api', 'auth:sanctum','role:driver|store_employee|admin_cook'],
-], function ($router) {
-    Route::post('/forgetPassword', [WorkerController::class,'forgetPassword']);
-});
 
 Route::group([
     'middleware' => ['api', 'auth:sanctum'],
 ], function ($router) {
     Route::get('/getMyInfo', [AdminController::class,'getMyInfo']);
     Route::post('/logout', [AuthController::class,'logout']);
+
+    Route::get('/getCustomerInfo', [CustomerController::class,'getCustomerInfo'])
+        ->middleware('role:customer');
 
 });
 
@@ -92,6 +90,7 @@ Route::group([
     Route::get('/getMyOrders', [OrderController::class,'getMyOrders']);
 
 
+
 });
 
 Route::group([
@@ -115,6 +114,7 @@ Route::group([
 ], function ($router) {
     Route::post('/createUser', [AdminController::class,'createUser']);
     Route::post('/updateUser/{id}', [AdminController::class,'updateUser']);
+    Route::delete('/deleteImage/{user_id}', [AdminController::class,'deleteImage']);
     Route::delete('/deleteUser/{id}', [AdminController::class,'deleteUser']);
     Route::get('/getUser/{id}', [AdminController::class,'getUser']);
     Route::get('/getAllUsers/{request}', [AdminController::class,'getAllUsers']);
@@ -155,9 +155,15 @@ Route::group([
 
 
    Route::group([
-    'middleware' => ['api','auth:sanctum','role:store_employee|driver'],
+    'middleware' => ['api','auth:sanctum'],
     ], function ($router) {
-    Route::get('/bag', [WorkerController::class,'scanQr']);
+    Route::get('/bag', [WorkerController::class,'scanQr'])->middleware('role:driver|store_employee');
+
+    Route::post('/forgetPassword', [WorkerController::class,'forgetPassword'])
+           ->middleware('role:driver|store_employee|admin_cook|admin');
+
+    Route::get('/getCustomerForDriver/{id}', [WorkerController::class,'getCustomerForDriver'])
+           ->middleware('role:driver|store_employee');
    });
 
 Route::group([
@@ -174,7 +180,6 @@ Route::group([
 ], function ($router) {
     Route::post('/sendMessage', [MessageController::class,'sendMessage'])
         ->middleware('role:driver|store_employee|customer');
-
 
     Route::post('/respondRequest', [MessageController::class,'respondRequest'])
         ->middleware('role:admin|super_admin');

@@ -24,6 +24,9 @@ class ReportController extends Controller
                     'user_id.exists' => 'User is not exist in the system'
                 ]
             );
+
+
+
             if ($request->date!= null && $request->time_from !=null && $request->time_to !=null && $request->status !=null)
             {
                 $report = Scan_Log::where('date', $request->date )->where('status', $request->status)

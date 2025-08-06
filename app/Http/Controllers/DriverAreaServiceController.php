@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\DriverAreaService;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class DriverAreaServiceController extends Controller
@@ -47,6 +49,12 @@ class DriverAreaServiceController extends Controller
                 'message' => 'The assigned user does not have the driver role.'
             ], 403);
         }
+        if ($driverUser->is_active !=1) {
+            return response()->json([
+                'code'=>403,
+                'message' => 'The driver account is not yet activated'
+            ], 403);
+        }
 
         $area = DriverAreaService::create([
             'name' => $request->name,
@@ -78,6 +86,9 @@ class DriverAreaServiceController extends Controller
         }
         $validator = Validator::make($request->all(), [
             'name' => 'string',
+            'driver_id'=>'integer|exists:users,id'
+        ],[
+            'driver_id.exists'=>'driver is not exist in the system'
         ]);
 
         if ($validator->fails()) {
@@ -87,6 +98,16 @@ class DriverAreaServiceController extends Controller
             ],422);}
 
 
+        if ($request->filled('driver_id')) {
+            $driverUser = User::find($request->driver_id);
+
+            if (!$driverUser || !$driverUser->hasRole('driver')) {
+                return response()->json([
+                    'code' => 403,
+                    'message' => 'The assigned user does not have the driver role.'
+                ], 403);
+            }
+        }
 
         $area->update($request->all());
 
@@ -111,7 +132,14 @@ class DriverAreaServiceController extends Controller
                 'data'=>[]
             ], 404);
         }
+        $hasCustomers = Customer::where('area_id', $id)->exists();
 
+        if ($hasCustomers) {
+            return response()->json([
+                'code' => 422,
+                'message' => 'Cannot delete area because it is assigned to one or more customers.',
+            ], 422);
+        }
 
         $area->delete();
 
@@ -134,7 +162,8 @@ class DriverAreaServiceController extends Controller
             $data = DriverAreaService::where('name', $request)
                 ->orWhereHas('driver', function ($query) use ($request) {
                     $query->where('first_name',  $request )
-                        ->orWhere('last_name',  $request);
+                        ->orWhere('last_name',  $request)
+                       ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', "%{$request}%");
                 })
                 ->get();
 

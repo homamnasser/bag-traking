@@ -46,7 +46,7 @@ class MessageController extends Controller
 
         $validator = Validator::make($request->all(), [
             'action' => 'required|string|in:approved,rejected',
-            'id_message'=>'required|exists:message,id'
+            'message_id'=>'required|exists:messages,id'
         ], [
             'action.required' => 'You must select an action type ',
             'message.exists'=>'The message was not found '
@@ -57,8 +57,15 @@ class MessageController extends Controller
                 'message' => $validator->errors()->first(),
             ],422);
         }
-        $message = Message::find($request->id_message);
+        $message = Message::find($request->message_id);
         $user = User::find($message->user_id);
+
+        if($message->status!='pending'){
+            return response()->json([
+                'code' => 422,
+                'message' => 'This message has already been responded to',
+            ],422);
+        }
 
          if($request->action ==='approved'){
 
@@ -66,10 +73,6 @@ class MessageController extends Controller
 
                  $user->update(['is_active' => true]);
 
-                 return response()->json([
-                     'code' => 200,
-                     'message' =>'Account creation request approved successfully.',
-                 ],200);
 
              } elseif ($message->type === 'account_update') {
                  $newPassword = $message->data['new_password'];
@@ -85,13 +88,20 @@ class MessageController extends Controller
                      'password' => Hash::make($newPassword),
                  ]);
 
-                 return response()->json([
-                     'code' => 200,
-                     'message' => 'Password change request approved and updated successfully.',
-                 ],200);
              }
+             $message->update([
+                 'status' => $request->action
+             ]);
+
+             return response()->json([
+                 'code' => 200,
+                 'message' => $request->action === 'approved'
+                     ? 'The request has been approved successfully.'
+                     : 'The request has been rejected successfully.',
+             ], 200);
 
          } else {
+             $message->update(['status'=>'rejected']);
              return response()->json([
                  'code' => 200,
                  'message' => 'The request was rejected successfully.',
@@ -116,7 +126,7 @@ class MessageController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ]);
+            ],422);
         }
 
         Message::create([
@@ -150,7 +160,7 @@ class MessageController extends Controller
         return response()->json([
             'code' => 200,
             'data' => $dataMessages
-        ]);
+        ],200);
     }
 
     public function getMessage($id)
@@ -161,7 +171,7 @@ class MessageController extends Controller
             return response()->json([
                 'code'=>404,
                 'message' => 'message not found',
-            ]);
+            ],404);
         }
 
         $user=User::find($message->user_id);
@@ -173,7 +183,7 @@ class MessageController extends Controller
         return response()->json([
           'code'=>200,
           'data' => $message,
-           ]);
+           ],200);
     }
 
     public function getMessageByType($type)
@@ -188,7 +198,7 @@ class MessageController extends Controller
             return response()->json([
                 'code' => 400,
                 'message' => 'the type should be issue or accountsRequest'
-            ]);
+            ],400);
         }
         $messages = $message->get();
 
@@ -203,7 +213,7 @@ class MessageController extends Controller
         return response()->json([
             'code' => 200,
             'data' => $dataMessages
-        ]);
+        ],200);
 
     }
 }

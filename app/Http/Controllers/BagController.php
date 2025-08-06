@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class BagController extends Controller
@@ -56,7 +57,9 @@ class BagController extends Controller
                 'message' => 'Cannot delete bag. It is assigned to a customer.',
             ],403);
         }
+
         $bag->delete();
+
         return response()->json([
             'code'=>200,
             'message' => 'Bag deleted successfully.',

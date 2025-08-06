@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use  App\Models\Bag;
+use App\Models\Customer;
 use App\Models\Scan_Log;
 use App\Models\User;
+use http\Env\Response;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -77,6 +79,20 @@ class WorkerController extends Controller
                 'data' => []
             ],404);
         }
+
+        if ($request->has('first_name') || $request->has('last_name')) {
+            $ownerFirst = strtolower(isset($bag->customer->user->first_name) ? $bag->customer->user->first_name : '');
+            $ownerLast  = strtolower(isset($bag->customer->user->last_name) ? $bag->customer->user->last_name : '');
+
+            if (strtolower($request->first_name) !== $ownerFirst ||
+                strtolower($request->last_name) !== $ownerLast) {
+                return response()->json([
+                    'code' => 403,
+                    'message' => 'The bag owner information does not match.'
+                ], 403);
+            }
+        }
+
         $currentState = $bag->last_update_at;
         $scanType = $request->action;
 
@@ -169,4 +185,50 @@ class WorkerController extends Controller
         ],200);
     }
 
+
+
+   public function  getCustomerForDriver($id){
+
+       $driver =User::with('areas')->find($id);
+
+       if (!$driver ||$driver->areas->isEmpty()) {
+           return response()->json([
+               'code' => 404,
+               'message' => 'Driver or Area not found'
+           ], 404);
+       }
+
+       if (!$driver->hasRole('driver')) {
+           return response()->json([
+               'code' => 403,
+               'message' => 'User does not have role driver'
+           ], 403);
+       }
+       $areaIds = $driver->areas->pluck('id');
+       $customers = Customer::with('user', 'bags')
+           ->whereIn('area_id', $areaIds)
+           ->whereHas('user', function ($query) {
+               $query->where('is_active', 1);
+           })
+           ->get();
+
+
+       $allCustomer = $customers->map(function ($customer) use ($driver){
+        $reservedBags = $customer->bags->where('last_update_at', 'atCustomer')->pluck('bag_id');
+           return [
+               'id_customer' => $customer->id,
+               'name' => $customer->user->first_name . ' ' . $customer->user->last_name,
+               'address' => $customer->address,
+               'phone' => $customer->user->phone,
+               'driverName' => $driver->first_name . ' ' . $driver->last_name,
+               'reservedBags' => $reservedBags,
+               'bags' => $customer->bags->pluck('bag_id'),
+           ];
+       });
+
+       return response()->json([
+           'code' => 200,
+           'data' => $allCustomer
+       ],200);
+   }
 }
