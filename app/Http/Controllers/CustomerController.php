@@ -52,8 +52,9 @@ class CustomerController extends Controller
             'subscription_status' => 'required|in:0,1',
 
         ],['phone.unique' => 'the phone already exist',
-            'phone.regex' =>'please enter a valid  phone number' ,
-            'area_id.exists'=>'Area not found'
+            'phone.phone' =>'please enter a valid  phone number' ,
+            'area_id.exists'=>'Area not found',
+            'email.email' => 'Please enter a valid email address in the format name@gmail.com'
         ]);
 
         if ($validator->fails()) {
@@ -154,7 +155,7 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'string|max:55',
             'last_name'  => 'string|max:55',
-            'phone' => ['string','unique:users,phone','regex:/^(\+9715[0-9]{7}|^\+[1-9]\d{7,14})$/'],
+            'phone' => ['string','unique:users,phone','phone:AUTO'],
             'email'=> 'email|unique:users,email',
             'is_active'  => 'boolean',
             'password'   => 'string|min:6|confirmed',
@@ -164,8 +165,9 @@ class CustomerController extends Controller
             'old_bag_id' => 'exists:bags,bag_id'
             ],[
                 'phone.unique' => 'The phone already exist',
-                'phone.regex' =>'Please enter a valid  phone number',
-                'old_bag_id.exists'=>'There is no bag in this ID in the system'
+                'phone.phone' =>'Please enter a valid  phone number',
+                'old_bag_id.exists'=>'There is no bag in this ID in the system',
+                'email.email' => 'Please enter a valid email address in the format name@gmail.com'
             ]);
 
         if ($validator->fails()) {
@@ -328,10 +330,26 @@ class CustomerController extends Controller
 
 
         public function getCustomerByStatus($request){
+
+            $validator = Validator::make(['status' => $request], [
+                'status' => 'required|in:0,1,all'
+            ], [
+                'status.in' => 'The status value must be 0, 1, or all.'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'code' => 422,
+                    'message' => $validator->errors()->first(),
+                ], 422);
+            }
+
             $query = Customer::with(['user', 'area.driver', 'bags']);
 
             if ($request != "all" ) {
-                $query->where('subscription_status', $request);
+                $query->whereHas('user', function ($q) use ($request) {
+                    $q->where('is_active', $request);
+                });
             }
 
             $customers = $query->get();
@@ -339,7 +357,7 @@ class CustomerController extends Controller
             if ($customers->isEmpty()) {
                 return response()->json([
                     'code' => 404,
-                    'message' => 'No Customers found.',
+                    'message' => 'Customers not found.',
                     'data' => []
                 ], 404);
             }
@@ -475,4 +493,76 @@ class CustomerController extends Controller
     }
 
 
+
+    public function updateInfoByCustomer(Request $request)
+    {
+        $user = User::findOrFail(Auth::id());
+
+        if (!$user) {
+            return response()->json([
+                'code' => 401,
+                'message' => 'Unauthorized',
+                'data' => []
+            ], 401);
+        }
+
+
+        $customer = Customer::where('user_id', $user->id)->first();
+        if (!$customer) {
+            return response()->json([
+                'code' => 404,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+
+
+        $validator = Validator::make($request->all(), [
+            'phone' => ['string', 'unique:users,phone,' . $user->id, 'phone:AUTO'],
+            'email' => 'email|unique:users,email,' . $user->id
+        ], [
+            'phone.unique' => 'The phone already exists',
+            'phone.phone' => 'Please enter a valid phone number',
+            'email.unique' => 'The email already exists',
+            'email.email' => 'Please enter a valid email address in the format name@gmail.com'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $dataToUpdate = $request->only(['phone','email']);
+        $user->update($dataToUpdate);
+
+        $bags = $customer->bags;
+
+
+        return response()->json([
+            'code' => 200,
+            'message' => 'Your information has been updated successfully',
+            'data' => [
+                'id' => $customer->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+                'role' => $user->getRoleNames()->first(),
+                'is_active' => $user->is_active,
+                'address' => $customer->address,
+                'area' => optional($customer->area)->name,
+                'driverName' => optional($customer->area->driver)->first_name . ' ' . optional($customer->area->driver)->last_name,
+                'subscription_start_date' => optional($customer->subscription_start_date)->toDateString(),
+                'subscription_expiry_date' => optional($customer->subscription_expiry_date)->toDateString(),
+                'subscription_status' => $customer->subscription_status,
+                'bags_assigned' => $customer->bags->pluck('bag_id'),
+
+
+            ]
+        ], 200);
+
+
+    }
 }

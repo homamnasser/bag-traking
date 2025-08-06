@@ -44,11 +44,12 @@ Route::group([
 Route::group([
     'middleware' => ['api', 'auth:sanctum'],
 ], function ($router) {
-    Route::get('/getMyInfo', [AdminController::class,'getMyInfo']);
+    Route::get('/getMyInfo', [AdminController::class,'getMyInfo'])
+        ->middleware('role:driver|store_employee|admin_cook|admin|super_admin');
     Route::post('/logout', [AuthController::class,'logout']);
 
-    Route::get('/getCustomerInfo', [CustomerController::class,'getCustomerInfo'])
-        ->middleware('role:customer');
+
+
 
 });
 
@@ -61,7 +62,7 @@ Route::group([
     Route::post('/addCustomer', [CustomerController::class,'addCustomer']);
     Route::post('/updateCustomer/{id}', [CustomerController::class,'updateCustomer']);
     Route::post('/editStatus/{id}', [CustomerController::class,'editStatus']);
-    Route::get('/getCustomerByStatus/{subscription_status}', [CustomerController::class,'getCustomerByStatus']);
+    Route::get('/getCustomerByStatus/{is_active}', [CustomerController::class,'getCustomerByStatus']);
     Route::get('/getAllFoodPreferences', [CustomerFoodPreferencesController::class,'getAllFoodPreferences']);
     Route::get('/getCustomer/{id}', [CustomerController::class,'getCustomer']);
 
@@ -105,6 +106,16 @@ Route::group([
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/loginUser', [AuthController::class, 'loginUser']);
+
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:customer'],
+], function ($router) {
+    Route::post('/customerForgetPassword', [AuthController::class,'customerForgetPassword']);
+    Route::post('/customerCheckCode', [AuthController::class, 'customerCheckCode']);
+    Route::post('/customerResetPassword', [AuthController::class, 'customerResetPassword']);
+    Route::get('/getCustomerInfo', [CustomerController::class,'getCustomerInfo']);
+    Route::post('/updateInfoByCustomer', [CustomerController::class,'updateInfoByCustomer']);
+});
 
 
 
@@ -154,7 +165,7 @@ Route::group([
 
 
 
-   Route::group([
+    Route::group([
     'middleware' => ['api','auth:sanctum'],
     ], function ($router) {
     Route::get('/bag', [WorkerController::class,'scanQr'])->middleware('role:driver|store_employee');

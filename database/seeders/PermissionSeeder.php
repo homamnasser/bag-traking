@@ -74,7 +74,12 @@ class PermissionSeeder extends Seeder
             'getMyOrders',
             'report',
             'countBags',
-            'getCustomerInfo'
+            'getCustomerInfo',
+            'scanQr',
+            'customerResetPassword',
+            'customerCheckCode',
+            'customerForgetPassword',
+            'updateInfoByCustomer'
 
         ];
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\DriverAreaService;
 
 use App\Models\User;
@@ -314,6 +315,7 @@ class AdminController extends Controller
                 'message' => 'Unauthenticated. Please log in.'
             ], 401);
         }
+
         return response()->json([
             'code'=> 200,
             'message' => 'My info',

@@ -91,7 +91,9 @@ class RoleSeeder extends Seeder
        $driver->givePermissionTo([
            'forgetPassword',
            'sendMessage',
-           'getCustomerForDriver'
+           'getCustomerForDriver',
+           'getMyInfo',
+           'scanQr'
 
        ]);
        $admin_cook= Role::create(['name' => 'admin_cook']);
@@ -117,6 +119,7 @@ class RoleSeeder extends Seeder
           'forgetPassword',
            'sendMessage',
            'getMyInfo',
+           'scanQr'
 
 
        ]);
@@ -128,13 +131,16 @@ class RoleSeeder extends Seeder
             'deleteFoodPreferences',
             'getCustomerFoodPreferences',
             'sendMessage',
-            'getMyInfo',
             'addOrder',
             'deleteOrder',
             'getOrder',
             'updateOrder',
             'getMyOrders',
-            'getCustomerInfo'
+            'getCustomerInfo',
+            'customerResetPassword',
+            'customerCheckCode',
+            'customerForgetPassword',
+            'updateInfoByCustomer'
 
 
         ]);
