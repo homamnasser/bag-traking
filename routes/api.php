@@ -152,6 +152,15 @@ Route::group([
 
 });
 
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:admin_cook|customer'],
+    'prefix' => 'meal'
+], function ($router) {
+    Route::get('/getMeal/{id}', [MealController::class,'getMeal']);
+    Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
+
+
+});
     Route::group([
         'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin'],
         'prefix' => 'bag'
