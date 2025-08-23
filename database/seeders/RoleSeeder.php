@@ -141,7 +141,9 @@ class RoleSeeder extends Seeder
             'customerCheckCode',
             'customerForgetPassword',
             'updateInfoByCustomer',
-            'getCustomerNotification'
+            'getCustomerNotification',
+            'updateInfoByCustomer',
+            'getAllMeal'
 
 
         ]);
