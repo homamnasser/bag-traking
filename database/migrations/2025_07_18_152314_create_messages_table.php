@@ -13,10 +13,15 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->enum('type', ['account_creation', 'account_update', 'issue']);
+
+            $table->unsignedBigInteger('sender_id');
+            $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
+
+            $table->unsignedBigInteger('receiver_id');
+            $table->foreign('receiver_id')->references('id')->on('users')->onDelete('cascade');
+            $table->enum('type', ['account_creation', 'account_update', 'issue','system_notification']);
+            $table->string('event_key')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->string('subject')->nullable();
             $table->json('data');
             $table->timestamps();
         });

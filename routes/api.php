@@ -115,6 +115,7 @@ Route::group([
     Route::post('/customerResetPassword', [AuthController::class, 'customerResetPassword']);
     Route::get('/getCustomerInfo', [CustomerController::class,'getCustomerInfo']);
     Route::post('/updateInfoByCustomer', [CustomerController::class,'updateInfoByCustomer']);
+    Route::get('/getCustomerNotification', [CustomerController::class,'getCustomerNotification']);
 });
 
 
@@ -170,12 +171,14 @@ Route::group([
     ], function ($router) {
     Route::get('/bag', [WorkerController::class,'scanQr'])->middleware('role:driver|store_employee');
 
-    Route::post('/forgetPassword', [WorkerController::class,'forgetPassword'])
-           ->middleware('role:driver|store_employee|admin_cook|admin');
+
 
     Route::get('/getCustomerForDriver/{id}', [WorkerController::class,'getCustomerForDriver'])
            ->middleware('role:driver|store_employee');
    });
+    Route::post('/forgetPassword', [WorkerController::class,'forgetPassword']);
+
+
 
 Route::group([
     'middleware' => ['api','auth:sanctum','role:admin_cook'],

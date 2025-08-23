@@ -24,7 +24,7 @@ class  AuthController extends Controller
             'password' => ['required','min:6','confirmed'],
             'phone' => ['required', 'unique:users,phone', 'regex:/^\+9715[0,2-8]\d{7}$/'],
             'role' => ['required','in:driver,store_employee'],
-            'image.*' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
+            'image.*' => ['image','mimes:jpeg,png,jpg,gif','max:2048'],
 
         ],[
             'phone.unique' => 'the phone already exist',
@@ -58,13 +58,14 @@ class  AuthController extends Controller
            $user->assignRole($role);
 
         MessageController::createAccountRequestMessage([
-            'user_id'    =>$user->id,
+            'sender_id'    =>$user->id,
             'role'       => $request->role,
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'phone'      => $request->phone,
             'password'   => $request->password,
         ]);
+
         return response()->json([
             'code'=>200,
             'message' => 'Your account creation request has been submitted  to the restaurant management and is pending approval.',
@@ -95,12 +96,13 @@ class  AuthController extends Controller
         }
          if(!$user->is_active) {
              return response()->json([
-                 'code' => 403,
+                 'code' => 401,
                  'message' => 'The account is not activated yet. Please contact the restaurant management if there is an issue.'
-             ],403);
+             ],401);
          }
 
         $token = $user->createToken('API TOKEN')->plainTextToken;
+        $user->fcm_token = $request->fcm_token;                                    /////////////////////
         $userData = $user->toArray();
         $role=$user->getRoleNames()->first();
 

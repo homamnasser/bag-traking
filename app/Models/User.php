@@ -25,6 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'image',
         'is_active',
         'email',
+        'fcm_token'
 
     ];
 
@@ -57,9 +58,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(DriverAreaService::class,'driver_id');
     }
 
-    public function message(){
-        return $this->hasMany(Message::class);
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
     }
+
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class);

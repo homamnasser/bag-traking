@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -80,7 +81,7 @@ class BagController extends Controller
             return [
                 'id' => $bag->id,
                 'status' => $bag->status,
-                'customer' => $bag->customer?->user?->first_name. ' ' . $bag->customer?->user?->last_name,
+                'customer' => $bag->customer->user->first_name. ' ' . $bag->customer->user->last_name,
                 'qr_code_path' => $bag->qr_code_path,
                 'last_update_at' => $bag->last_update_at,
 

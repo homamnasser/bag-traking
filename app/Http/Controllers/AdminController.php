@@ -28,7 +28,7 @@ class AdminController extends Controller
          'phone'      => ['required', 'unique:users,phone','regex:/^\+9715[0,2-8]\d{7}$/'],
          'password'   => 'required|string|min:6|confirmed',
          'role'       => 'required|string|in:admin,admin_cook,driver,store_employee',
-         'image.*' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
+         'image.*' => ['image','mimes:jpeg,png,jpg,gif','max:2048'],
           ],[
          'phone.unique' => 'the phone already exist',
          'phone.regex' =>'please enter a valid United Arab Emirates phone number' ]);
@@ -100,7 +100,7 @@ class AdminController extends Controller
             'password'   => 'string|min:6|confirmed',
             'role'       => 'string|in:admin,admin_cook,driver,store_employee',
             'is_active'  => 'boolean',
-            'image' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
+            'image' => ['image','mimes:jpeg,png,jpg,gif','max:2048'],
         ],[
             'phone.regex' =>'please enter a valid United Arab Emirates phone number',
             'phone.unique' => 'the phone already exist',
@@ -129,6 +129,16 @@ class AdminController extends Controller
             $fileName = 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('images', $fileName, 'public');
             $dataToUpdate['image'] = asset('storage/' . $path);
+        }
+
+        if($request->is_active==0){
+            $area=$user->areas;
+            if($user->has('role')=='driver'&& $area && $area->driver_id ==$user->id){
+              return response()->json([
+                  'code'=>403,
+                  'message'=>"You cannot deactivate this driver because they are currently assigned to the area: {$area->name}."
+              ],403);
+            }
         }
 
         $user->update($dataToUpdate);

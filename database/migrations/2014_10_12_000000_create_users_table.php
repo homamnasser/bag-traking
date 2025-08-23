@@ -22,6 +22,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(false);
             $table->string('image')->nullable();
             $table->rememberToken();
+            $table->string('fcm_token')->nullable();
             $table->timestamps();
         });
     }

@@ -43,17 +43,17 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:55',
             'last_name' => 'required|string|max:55',
-            'phone' => ['required','phone:AUTO', 'unique:users,phone'],
+            'phone' => ['required', 'phone:AUTO', 'unique:users,phone'],
             'password' => 'required|string|min:6|confirmed',
-            'email'=> 'required|email|unique:users,email',
-            'image' => ['image','mimes:jpeg,png,jpg,gif','max:512'],
+            'email' => 'required|email|unique:users,email',
+            'image' => ['image', 'mimes:jpeg,png,jpg,gif', 'max:512'],
             'area_id' => 'required|exists:driver_area_services,id',
             'address' => 'required|string',
             'subscription_status' => 'required|in:0,1',
 
-        ],['phone.unique' => 'the phone already exist',
-            'phone.phone' =>'please enter a valid  phone number' ,
-            'area_id.exists'=>'Area not found',
+        ], ['phone.unique' => 'the phone already exist',
+            'phone.phone' => 'please enter a valid  phone number',
+            'area_id.exists' => 'Area not found',
             'email.email' => 'Please enter a valid email address in the format name@gmail.com'
         ]);
 
@@ -61,74 +61,84 @@ class CustomerController extends Controller
             return response()->json([
                 'code' => 422,
                 'message' => $validator->errors()->first(),
-            ],422);}
-
-        $images = null;
-        if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $fileName = 'images/' . 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            Storage::disk('public')->put($fileName, file_get_contents($file));
-            $image = 'storage/' . $fileName;
-            $images=asset($image);
+            ], 422);
         }
-        $bags = Bag::where('status', 'available')->take(2)->get();
-        if ($bags->count() < 2) {
+
+        try {
+            $result=DB::transaction(function () use ($request, &$qrUrls) {
+                $images = null;
+                if ($request->hasFile('image')) {
+                    $file = $request->file('image');
+                    $fileName = 'images/' . 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    Storage::disk('public')->put($fileName, file_get_contents($file));
+                    $image = 'storage/' . $fileName;
+                    $images = asset($image);
+                }
+                $bags = Bag::where('status', 'available')->take(2)->get();
+                if ($bags->count() < 2) {
+                    throw new \Exception('Not enough available bags to assign to this customer.');
+                }
+                $user = User::create([
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'phone' => $request->phone,
+                    'password' => Hash::make($request->password),
+                    'email' => $request->email,
+                    'image' => $images,
+                    'is_active' => true
+                ]);
+
+                $user->assignRole('customer');
+
+                $subscriptionStartDate = Carbon::now();
+
+                $subscriptionExpiryDate = $subscriptionStartDate->copy()->addMonth();
+
+                $customer = Customer::create([
+                    'user_id' => $user->id,
+                    'area_id' => $request->area_id,
+                    'address' => $request->address,
+                    'subscription_start_date' => $subscriptionStartDate,
+                    'subscription_expiry_date' => $subscriptionExpiryDate,
+                    'subscription_status' => $request->subscription_status
+                ]);
+
+                $qrUrls = [];
+                foreach ($bags as $bag) {
+                    $qrUrls[] = $this->generateBagQr($bag, $user, $customer);
+                }
+                return [
+                    'user' => $user,
+                    'customer' => $customer,
+                    'bags' => $bags,
+                    'qrUrls' => $qrUrls
+                ];
+            });
+                return response()->json([
+                    'code' => 201,
+                    'message' => 'Customer  added successfully ',
+                    'data' => [
+                        'id' => $result['customer']->id,
+                        'name' => $result['user']->first_name . ' ' . $result['user']->last_name,
+                        'phone' => $result['user']->phone,
+                        'email' => $result['user']->email,
+                        'role' => 'customer',
+                        'area' => $result['customer']->area->name,
+                        'address' => $result['customer']->address,
+                        'subscription_start_date' => $result['customer']->subscription_start_date->toDateString(),
+                        'subscription_expiry_date' => $result['customer']->subscription_expiry_date->toDateString(),
+                        'subscription_status' => $result['customer']->subscription_status,
+                        'bags_assigned' => $result['bags']->pluck('bag_id'),
+                        'qr_urls' => $result['qrUrls'],
+                    ]
+                ], 201);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'code' => 422,
-                'message' => 'Not enough available bags to assign to this customer.'],422);
+                'message' => $e->getMessage()
+            ], 422);
         }
-
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'email'=>$request->email,
-            'image' =>$images,
-            'is_active'=>true
-        ]);
-
-        $user->assignRole('customer');
-
-        $subscriptionStartDate = Carbon::now();
-
-        $subscriptionExpiryDate = $subscriptionStartDate->copy()->addMonth();
-
-        $customer = Customer::create([
-            'user_id' => $user->id,
-            'area_id' => $request->area_id,
-            'address' => $request->address,
-            'subscription_start_date' => $subscriptionStartDate,
-            'subscription_expiry_date' => $subscriptionExpiryDate,
-            'subscription_status'=>$request->subscription_status
-        ]);
-
-        $qrUrls = [];
-        foreach ($bags as $bag) {
-            $qrUrls[] = $this->generateBagQr($bag, $user, $customer);
-        }
-
-        return response()->json([
-            'code' => 201,
-            'message' => 'Customer  added successfully ',
-            'data' => [
-
-                    'id'=> $customer->id,
-                    'name' => $user->first_name . ' ' . $user->last_name,
-                    'phone' => $user->phone,
-                    'email'=>$request->email,
-                    'role' => 'customer',
-                    'area'=> $customer->area->name,
-                    'address'=> $customer->address,
-                    'subscription_start_date' => $customer->subscription_start_date->toDateString(),
-                    'subscription_expiry_date' => $customer->subscription_expiry_date->toDateString(),
-                    'subscription_status'=> $customer->subscription_status,
-                    'bags_assigned' => $bags->pluck('bag_id'),
-                    'qr_urls' => $qrUrls,
-
-                ]
-            ],201);
-
     }
 
     public function updateCustomer(Request $request, $id)
@@ -404,8 +414,7 @@ class CustomerController extends Controller
             ], 200);
         }
 
-        public
-        function getCustomer($id)
+        public function getCustomer($id)
         {
             $customer = Customer::with('user', 'area.driver', 'bags')->find($id);
 
