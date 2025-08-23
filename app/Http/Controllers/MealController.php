@@ -20,7 +20,7 @@ class MealController extends Controller
             'meal_type' => 'required|string',
             "is_active" => 'required|boolean',
             'imgs'=> 'required',
-            'imgs.*' => [ 'image', 'mimes:jpeg,png,jpg,gif', 'max:512'],
+            'imgs.*' => [ 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ]);
         if ($validator->fails()) {
             return response()->json([

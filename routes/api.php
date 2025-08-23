@@ -68,6 +68,7 @@ Route::group([
 
 
 
+
 });
 
 
@@ -106,17 +107,19 @@ Route::group([
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/loginUser', [AuthController::class, 'loginUser']);
+Route::middleware('auth:sanctum')->post('/createFcmToken', [AuthController::class, 'createFcmToken']);
 
 Route::group([
     'middleware' => ['api', 'auth:sanctum', 'role:customer'],
 ], function ($router) {
-    Route::post('/customerForgetPassword', [AuthController::class,'customerForgetPassword']);
-    Route::post('/customerCheckCode', [AuthController::class, 'customerCheckCode']);
-    Route::post('/customerResetPassword', [AuthController::class, 'customerResetPassword']);
+
     Route::get('/getCustomerInfo', [CustomerController::class,'getCustomerInfo']);
     Route::post('/updateInfoByCustomer', [CustomerController::class,'updateInfoByCustomer']);
+    Route::get('/getCustomerNotification', [MessageController::class,'getCustomerNotification']);
 });
-
+Route::post('/customerForgetPassword', [AuthController::class,'customerForgetPassword']);
+Route::post('/customerCheckCode', [AuthController::class, 'customerCheckCode']);
+Route::post('/customerResetPassword', [AuthController::class, 'customerResetPassword']);
 
 
 Route::group([
@@ -150,17 +153,18 @@ Route::group([
     Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
 
 
+    Route::group([
+        'middleware' => ['api', 'auth:sanctum', 'role:admin_cook|customer'],
+        'prefix' => 'meal'
+    ], function ($router) {
+        Route::get('/getMeal/{id}', [MealController::class,'getMeal']);
+        Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
+
+
+    });
+
 });
 
-Route::group([
-    'middleware' => ['api', 'auth:sanctum', 'role:admin_cook|customer'],
-    'prefix' => 'meal'
-], function ($router) {
-    Route::get('/getMeal/{id}', [MealController::class,'getMeal']);
-    Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
-
-
-});
     Route::group([
         'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin'],
         'prefix' => 'bag'
@@ -170,6 +174,7 @@ Route::group([
         Route::get('/getAllBags',[BagController::class,'getAllBags']);
         Route::get('/getBagByStatus/{request}', [BagController::class,'getBagsByStatus']);
         Route::get('/searchBagById/{id}', [BagController::class,'searchBagById']);
+        Route::get('/editLastUpdateBagByAdmin/{bag_id}', [BagController::class,'editLastUpdateBagByAdmin']);
     });
 
 
@@ -179,12 +184,14 @@ Route::group([
     ], function ($router) {
     Route::get('/bag', [WorkerController::class,'scanQr'])->middleware('role:driver|store_employee');
 
-    Route::post('/forgetPassword', [WorkerController::class,'forgetPassword'])
-           ->middleware('role:driver|store_employee|admin_cook|admin');
+
 
     Route::get('/getCustomerForDriver/{id}', [WorkerController::class,'getCustomerForDriver'])
            ->middleware('role:driver|store_employee');
    });
+    Route::post('/forgetPassword', [WorkerController::class,'forgetPassword']);
+
+
 
 Route::group([
     'middleware' => ['api','auth:sanctum','role:admin_cook'],

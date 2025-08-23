@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -12,11 +14,12 @@ class MessageController extends Controller
 {
     public static function createAccountRequestMessage(array $data)
     {
-        return Message::create([
+        $message= Message::create([
             'type' => 'account_creation',
-            'subject' => "{$data['role']} asked to create account in application",
-            'user_id' => $data['user_id'],
+            'sender_id' => $data['sender_id'],
+            'receiver_id'=> 1,
             'data' => [
+                'message' => "{$data['role']} asked to create account in application",
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'phone' => $data['phone'],
@@ -24,22 +27,61 @@ class MessageController extends Controller
             ]
 
         ]);
+        $pushController = new PushNotificationController();
+        $admins = User::role('admin')->get();
+
+        foreach ($admins as $admin) {
+            if ($admin->fcm_token) {
+                $pushController->send(
+                    [
+                        'id' => $admin->id,
+                        'fcm_token' => $admin->fcm_token,
+                        'first_name' => $admin->first_name,
+                        'last_name' => $admin->last_name,
+                    ],
+                    'New Account Request',
+                    "{$data['first_name']} {$data['last_name']}  has requested to create an account.",
+                     'messages/requests'
+                );
+            }
+        }
+        return $message;
     }
 
     public static function passwordResetRequestMessage(array $data)
     {
-        return Message::create([
+        $message = Message::create([
             'type' => 'account_update',
-            'subject' => "{$data['role']} had forgotten his password . asked to change it in the application",
-            'user_id' => $data['user_id'],
+            'sender_id' => $data['sender_id'],
+            'receiver_id' => 1,
             'data' => [
+                'message' => "{$data['role']} had forgotten his password . asked to change it in the application",
                 'full_name' => $data['full_name'],
                 'phone' => $data['phone'],
                 'new_password' => $data['new_password'],
             ]
 
         ]);
+        $pushController = new PushNotificationController();
 
+        $admins = User::role('admin')->get();
+
+        foreach ($admins as $admin) {
+            if ($admin->fcm_token) {
+                $pushController->send(
+                    [
+                        'id' => $admin->id,
+                        'fcm_token' => $admin->fcm_token,
+                        'first_name' => $admin->first_name,
+                        'last_name' => $admin->last_name,
+                    ],
+                    'New Account Request',
+                    "{$data['first_name']} {$data['last_name']}  has requested to change his password.",
+                    'messages/requests'
+                );
+            }
+        }
+        return $message;
     }
 
     public function respondRequest(Request $request){
@@ -58,7 +100,7 @@ class MessageController extends Controller
             ],422);
         }
         $message = Message::find($request->message_id);
-        $user = User::find($message->user_id);
+        $user = User::find($message->sender_id);
 
         if($message->status!='pending'){
             return response()->json([
@@ -110,14 +152,10 @@ class MessageController extends Controller
     }
 
 
-
-
-
     public function sendMessage(Request $request)
     {
 
         $validator = Validator::make($request->all(), [
-            'subject' => 'string',
             'data' => 'required|string'
         ], [
             'data.required' => 'cannot send an empty message'
@@ -130,13 +168,33 @@ class MessageController extends Controller
         }
 
         Message::create([
-            'user_id' => auth()->id(),
-            'subject' => $request->subject,
+            'sender_id' => auth()->id(),
+            'receiver_id'=>1,
             'data' => $request->data,
             'type' => 'issue',
             'status' => 'approved'
 
         ]);
+        $user = User::find(auth()->id());
+        $role = $user->getRoleNames()->first();
+        $pushController = new PushNotificationController();
+        $admins = User::role('admin')->get();
+
+        foreach ($admins as $admin) {
+            if ($admin->fcm_token) {
+                $pushController->send(
+                    [
+                        'id' => $admin->id,
+                        'fcm_token' => $admin->fcm_token,
+                        'first_name' => $admin->first_name,
+                        'last_name' => $admin->last_name,
+                    ],
+                    'New Issue Reported',
+                    "{$role} {$user->first_name} {$user->last_name} has reported an issue:\n\"{$request->data}\"",
+                    'messages/requests'
+                );
+            }
+        }
 
         return response()->json([
             'code' => 201,
@@ -147,13 +205,14 @@ class MessageController extends Controller
 
     public function getAllMessages()
     {
-        $messages = Message::with('user')->get();
+        $messages = Message::with('sender')
+            ->where('receiver_id',1)
+            ->get();
 
 
         $dataMessages = $messages->map(function ($message) {
             return [
-                'userName' => $message->user ? $message->user->first_name . ' ' . $message->user->last_name : null,
-                'subject' => $message->subject,
+                'userName' => $message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : null,
                 'data' => $message->data,
             ];
         });
@@ -173,11 +232,16 @@ class MessageController extends Controller
                 'message' => 'message not found',
             ],404);
         }
+        if($message->receiver_id!==1){
+            return response()->json([
+                'code'=>422,
+                'message' => 'can not show this message',
+            ],422);
+        }
 
-        $user=User::find($message->user_id);
+        $user=User::find($message->sender_id);
        $message=[
            'userName'=>$user->first_name . ' ' . $user->last_name,
-           'subject'=>$message->subject,
            'data'=>$message->data
           ];
         return response()->json([
@@ -188,7 +252,7 @@ class MessageController extends Controller
 
     public function getMessageByType($type)
     {
-        $message = Message::with('user');
+        $message = Message::with('sender');
 
         if ($type === 'issue') {
             $message->where('type', 'issue');
@@ -204,8 +268,7 @@ class MessageController extends Controller
 
         $dataMessages = $messages->map(function ($message) {
             return [
-                'userName' => $message->user ? $message->user->first_name . ' ' . $message->user->last_name : null,
-                'subject' => $message->subject,
+                'userName' => $message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : null,
                 'data' => $message->data,
             ];
         });
@@ -216,4 +279,25 @@ class MessageController extends Controller
         ],200);
 
     }
+
+    public function getCustomerNotification()
+    {
+        $user = Auth::user();
+
+        $messages = Message::where('receiver_id',$user->id)
+            ->with('sender')
+            ->get();
+
+        $dataMessages = $messages->map(function ($message) {
+            return [
+                'data' => $message->data,
+            ];
+        });
+
+        return response()->json([
+            'code' => 200,
+            'data' => $dataMessages
+        ], 200);
+    }
+
 }

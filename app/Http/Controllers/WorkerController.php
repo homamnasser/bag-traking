@@ -6,7 +6,7 @@ use  App\Models\Bag;
 use App\Models\Customer;
 use App\Models\Scan_Log;
 use App\Models\User;
-use http\Env\Response;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,8 +27,14 @@ class WorkerController extends Controller
         if (!$userPhone) {
             return response()->json([
                 'code'=>404,
-                'message' => 'Phone number is incorrect or not registered.'
+                'message' => 'Phone number is incorrect ,please Check your for number.'
             ],404);
+        }
+        if (! $userPhone->hasAnyRole(['driver', 'store_employee', 'admin_cook','admin'])) {
+            return response()->json([
+                'code' => 403,
+                'message' => 'You do not have permission to access this resource.',
+            ], 403);
         }
         $fullName = $userPhone->first_name . ' ' . $userPhone->last_name;
 
@@ -41,7 +47,7 @@ class WorkerController extends Controller
 
 
         MessageController::passwordResetRequestMessage([
-            'user_id'    =>$userPhone->id,
+            'sender_id'    =>$userPhone->id,
             'role'       => $userPhone->getRoleNames()->first(),
             'full_name'   => $request->full_name,
             'phone'       => $request->phone,
@@ -95,7 +101,7 @@ class WorkerController extends Controller
 
         $currentState = $bag->last_update_at;
         $scanType = $request->action;
-
+        $customer=$bag->customer->user;
         switch ($scanType) {
 
             case 'check_out_warehouse':
@@ -109,14 +115,28 @@ class WorkerController extends Controller
                 break;
 
             case 'check_in_driver':
-
-                if (!in_array($currentState, ['atStore', 'atCustomer'])) {
+                if ($currentState =='atWay') {
                     return response()->json([
                         'code' => 400,
-                        'message' => 'Bag is not ready for pickup by the driver.'
+                        'message' =>'Bag status is On the Way. It has already been scanned by the driver.'
                     ],400);
                 }
                 $bag->last_update_at = 'atWay';
+                $bag->save();
+
+                $pushController = new PushNotificationController();
+                if ($customer &&$customer->fcm_token) {
+                    $pushController->send(
+                        [
+                            'id' => $customer->id,
+                            'fcm_token' => $customer->fcm_token,
+                            'first_name' => $customer->first_name,
+                            'last_name' => $customer->last_name,
+                        ],
+                        'Your Bag is on the Way',
+                        "Dear {$customer->first_name}, Great news🤩\n your bag has left the restaurant and is on its way to your location 🚛📍 "
+                    );
+                }
                 break;
 
             case 'check_out_driver':
@@ -138,7 +158,18 @@ class WorkerController extends Controller
                         'message' => 'Bag is not on the way. Please scan check-in driver first.'
                     ],400);
                 }
-                $bag->last_update_at = 'atCustomer';
+                 $bag->last_update_at = 'atCustomer';
+                 $customerPhone = $customer->phone;
+
+                $whatsAppService = app(WhatsAppService::class);
+
+                $whatsAppService->sendMessage(
+                    $customerPhone,
+                    "Dear {$customer->first_name}, thank you for choosing our restaurant to take care of your food 🙏🏻
+Great news🤩
+Your bag has just been delivered to your location.🚛📍"
+
+                );
 
                 break;
 
