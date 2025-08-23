@@ -142,7 +142,7 @@ Route::group([
 
 
 Route::group([
-    'middleware' => ['api', 'auth:sanctum', 'role:admin_cook|customer'],
+    'middleware' => ['api', 'auth:sanctum', 'role:admin_cook'],
     'prefix' => 'meal'
 ], function ($router) {
     Route::post('/addMeal', [MealController::class,'addMeal']);
@@ -152,6 +152,16 @@ Route::group([
     Route::post('/updatePhoto/{id}', [MealController::class,'updatePhoto']);
     Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
 
+
+    Route::group([
+        'middleware' => ['api', 'auth:sanctum', 'role:admin_cook|customer'],
+        'prefix' => 'meal'
+    ], function ($router) {
+        Route::get('/getMeal/{id}', [MealController::class,'getMeal']);
+        Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
+
+
+    });
 
 });
 
