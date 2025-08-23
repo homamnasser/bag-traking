@@ -32,16 +32,9 @@ class OrderController extends Controller
         if ($existingOrdersCount >= 1) {
             return response()->json([
                 'code' => 422,
-                'message' => 'You already have an order today.',
+                'message' => 'You already have an order today please try tomorrow.',
             ], 422);
         }
-        if ($existingOrdersCount >= 1) {
-            return response()->json([
-                'code' => 422,
-                'message' => 'You have order.',
-            ], 422);
-        }
-
         $validator = Validator::make($request->all(), [
             'meal1_id' => 'required|integer|exists:meals,id',
             'meal2_id' => 'nullable|integer|exists:meals,id',
@@ -58,12 +51,51 @@ class OrderController extends Controller
                 'message' => $validator->errors()->first(),
             ], 422);
         }
+        $order = Order::create([
+                'user_id'=>$user->id,
+                'meal1_id' => $request->meal1_id,
+                'meal2_id' => $request->meal2_id,
+                'order_date' => $today,
+
+            ]
+        );
+
+
+        return response()->json([
+            'code' => 200,
+            'message' => 'Order added successfully ',
+            'data' => [
+                'id' => $order->id,
+                'meal1' => $order->meal1?->name,
+                'meal2' => $order->meal2?->name,
+
+            ]
+        ], 201);
+
     }
         public function updateOrder(Request $request, $id)
     {
-        $currentTime = Carbon::now();
-        $limitHour = 2;
+        $order = Order::find($id);
 
+        $currentTime = Carbon::now();
+        $limitHour = 14 ;
+        $today = Carbon::today()->toDateString();
+
+        if (!$order) {
+            return response()->json([
+                'code' => 404,
+                'message' => 'Order not found',
+                'data' => []
+            ], 404);
+        }
+
+        if ($order->order_date != $today) {
+            return response()->json([
+                'code' => 403,
+                'message' => 'This order cannot be updated as its date is not today.',
+                'data' => []
+            ], 403);
+        }
 
         if ($currentTime->hour >= $limitHour) {
             return response()->json([
@@ -73,15 +105,8 @@ class OrderController extends Controller
             ], 403);
         }
 
-        $order = Order::find($id);
 
-        if (!$order) {
-            return response()->json([
-                'code' => 404,
-                'message' => 'Order not found',
-                'data' => []
-            ], 404);
-        }
+
         $validator = Validator::make($request->all(), [
             'meal1_id' => 'integer|exists:meals,id',
             'meal2_id' => 'integer|exists:meals,id',
@@ -117,17 +142,9 @@ class OrderController extends Controller
     public function deleteOrder($id)
     {
         $currentTime = Carbon::now();
-        $limitHour = 2;
-
-
-        if ($currentTime->hour >= $limitHour) {
-            return response()->json([
-                'code' => 403,
-                'message' => 'Order cannot be deleted after 2 PM.',
-                'data' => []
-            ], 403);
-        }
+        $limitHour = 14;
         $order = Order::find($id);
+        $today = Carbon::today()->toDateString();
 
         if (!$order) {
             return response()->json([
@@ -136,6 +153,21 @@ class OrderController extends Controller
                 'data' => []
             ], 404);
         }
+        if ($order->order_date != $today) {
+            return response()->json([
+                'code' => 403,
+                'message' => 'This order cannot be deleted as its date is not today.',
+                'data' => []
+            ], 403);
+        }
+        if ($currentTime->hour >= $limitHour) {
+            return response()->json([
+                'code' => 403,
+                'message' => 'Order cannot be deleted after 2 PM.',
+                'data' => []
+            ], 403);
+        }
+
 
 
         $order->delete();
@@ -183,8 +215,8 @@ class OrderController extends Controller
                 'message' => 'Unauthenticated. Please log in.'
             ], 401);
         }
-        $isBeforeTwoPm = Carbon::now()->lessThan(Carbon::parse('2:00'));
-        $orders = Order::where('user_id', $user->id)->whereDate('order_date', $today)->get();
+        $isBeforeTwoPm = Carbon::now()->lessThan(Carbon::parse('14:00'));
+        $orders = Order::where('user_id', $user->id)->get();
 
 
         if ($orders->isEmpty()) {
@@ -195,13 +227,16 @@ class OrderController extends Controller
             ], 404);
         }
 
-        $myOrders = $orders->map(function ($order)use ($isBeforeTwoPm) {
+        $myOrders = $orders->map(function ($order) use ($isBeforeTwoPm, $today) {
+            $status = ($order->order_date == $today) ? 'In preparation' : 'Delivered';
+            $canBeEdited = ($order->order_date == $today) && $isBeforeTwoPm;
             return [
                 'id' => $order->id,
                 'meal1' => $order->meal1?->name,
                 'meal2' => $order->meal2?->name,
                 'order_date' => \Carbon\Carbon::parse($order->order_date)->toDateString(),
-                'can_be_edited'=>$isBeforeTwoPm,
+                'can_be_edited' => $canBeEdited,
+                'status' => $status,
             ];
         });
 
