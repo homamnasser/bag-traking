@@ -102,7 +102,6 @@ class  AuthController extends Controller
          }
 
         $token = $user->createToken('API TOKEN')->plainTextToken;
-        $user->fcm_token = $request->fcm_token;                                    /////////////////////
         $userData = $user->toArray();
         $role=$user->getRoleNames()->first();
 
@@ -121,6 +120,31 @@ class  AuthController extends Controller
             'code'=>200,
             'message' => 'User successfully signed out'],200);
     }
+
+    public function createFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+        $user = auth()->user();
+        if ($user) {
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+               return response()->json([
+                   'code' => 200,
+                   'message' => 'FCM token create successfully',
+                   'data' => [
+                       'fcm_token' => $user->fcm_token
+                   ]
+               ], 200);
+        } else {
+            return response()->json([
+                'code' => 401,
+                'message' => 'User not authenticated.'],
+                401);
+        }
+    }
+
 
     public function customerForgetPassword(Request $request)
     {

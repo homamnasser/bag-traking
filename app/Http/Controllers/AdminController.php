@@ -132,8 +132,9 @@ class AdminController extends Controller
         }
 
         if($request->is_active==0){
-            $area=$user->areas;
-            if($user->has('role')=='driver'&& $area && $area->driver_id ==$user->id){
+            $areas=$user->areas;
+            if($user->hasRole('driver')&&  $areas->where('driver_id', $user->id)->isNotEmpty()){
+                $area = $areas->where('driver_id', $user->id)->first();
               return response()->json([
                   'code'=>403,
                   'message'=>"You cannot deactivate this driver because they are currently assigned to the area: {$area->name}."
@@ -210,7 +211,7 @@ class AdminController extends Controller
             if ($area) {
                 return response()->json([
                     'code' => 403,
-                    'message' => "Cannot delete the driver assigned to area ID: {$area->id} Please assign the area to another driver and then try again"
+                    'message' => "Cannot delete the driver assigned to area : {$area->name}, Please assign the area to another driver and then try again"
                 ],403);
             }
         }

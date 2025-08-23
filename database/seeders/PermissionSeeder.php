@@ -80,7 +80,8 @@ class PermissionSeeder extends Seeder
             'customerCheckCode',
             'customerForgetPassword',
             'updateInfoByCustomer',
-            'getCustomerNotification'
+            'getCustomerNotification',
+            'editLastUpdateBagByAdmin'
 
         ];
 

@@ -47,6 +47,7 @@ class RoleSeeder extends Seeder
             'deleteImage',
             'report',
             'countBags',
+            'editLastUpdateBagByAdmin'
 
 
 
@@ -83,6 +84,8 @@ class RoleSeeder extends Seeder
             'deleteImage',
             'report',
             'countBags',
+            'forgetPassword',
+            'editLastUpdateBagByAdmin'
 
 
         ]);

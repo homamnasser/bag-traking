@@ -63,7 +63,7 @@ class CheckSubscriptionExpiry extends Command
                         'message' => 'We apologize, your service has been suspended due to subscription expiration. Please contact the restaurant to renew your account and continue enjoying our service',
                         'expiry_date' => $customer->subscription_expiry_date,
                     ],
-                    'status' => 'rejected',
+                    'status' => 'approved',
                     'event_key' => $eventKey,
                 ]);
             if ($customer->user->fcm_token) {

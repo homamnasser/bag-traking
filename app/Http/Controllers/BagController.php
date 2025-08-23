@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bag;
+use App\Models\Scan_Log;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -122,5 +124,59 @@ class BagController extends Controller
             'data' => $bag
         ],200);
     }
+    public function editLastUpdateBagByAdmin($id)
+    {
+        $userId=Auth::id();
+        $bag = Bag::where('id', $id)->first();;
 
+        if (!$bag) {
+            return response()->json([
+                'code'=>404,
+                'message' => 'The bag is not exist',
+                'data'=>[]
+            ],404);
+        }
+
+        switch ($bag->last_update_at) {
+            case 'atStore':
+                $bag->last_update_at = 'atWay';
+                break;
+            case 'atCustomer':
+                $bag->last_update_at = 'atWay';
+                break;
+
+            case 'atWay':
+
+                $previousLog = Scan_Log::where('bag_id', $bag->id)
+                    ->where('status', '!=', 'atWay')
+                    ->latest()
+                    ->first();
+
+                if ($previousLog) {
+                    if ($previousLog->status === 'atStore') {
+                        $bag->last_update_at = 'atCustomer';
+                    } elseif ($previousLog->status === 'atCustomer') {
+                        $bag->last_update_at = 'atStore';
+                    }
+                }
+                break;
+        }
+
+        $bag->save();
+
+        Scan_Log::create([
+            'user_id' => $userId,
+            'bag_id' => $bag->id,
+            'date' => Carbon::now()->toDateString(),
+            'time' => Carbon::now()->toTimeString(),
+            'status' => $bag->last_update_at,
+
+        ]);
+
+        return response()->json([
+            'code'=>200,
+            'message' => 'Bag update successfully',
+            'bag' => $bag
+        ]);
+    }
 }

@@ -268,7 +268,7 @@ class MessageController extends Controller
 
         $dataMessages = $messages->map(function ($message) {
             return [
-                'userName' => $message->user ? $message->user->first_name . ' ' . $message->user->last_name : null,
+                'userName' => $message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : null,
                 'data' => $message->data,
             ];
         });

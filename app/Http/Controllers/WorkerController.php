@@ -30,7 +30,7 @@ class WorkerController extends Controller
                 'message' => 'Phone number is incorrect ,please Check your for number.'
             ],404);
         }
-        if (! $userPhone->hasAnyRole(['driver', 'store_employee', 'admin_cook'])) {
+        if (! $userPhone->hasAnyRole(['driver', 'store_employee', 'admin_cook','admin'])) {
             return response()->json([
                 'code' => 403,
                 'message' => 'You do not have permission to access this resource.',
