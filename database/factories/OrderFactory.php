@@ -28,7 +28,7 @@ class OrderFactory extends Factory
             'user_id' => $userId,
             'meal1_id' => $meal1Id,
             'meal2_id' => $meal2Id,
-            'order_date' => Carbon::today(), // الطلب سيكون لتاريخ اليوم
+            'order_date' => Carbon::today(),
         ];
     }
 }
