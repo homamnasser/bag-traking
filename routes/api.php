@@ -148,14 +148,12 @@ Route::group([
     Route::post('/addMeal', [MealController::class,'addMeal']);
     Route::post('/updateMeal/{id}', [MealController::class,'updateMeal']);
     Route::delete('/deleteMeal/{id}', [MealController::class,'deleteMeal']);
-    Route::get('/getMeal/{id}', [MealController::class,'getMeal']);
     Route::post('/updatePhoto/{id}', [MealController::class,'updatePhoto']);
-    Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
 
+});
 
     Route::group([
         'middleware' => ['api', 'auth:sanctum', 'role:admin_cook|customer'],
-        'prefix' => 'meal'
     ], function ($router) {
         Route::get('/getMeal/{id}', [MealController::class,'getMeal']);
         Route::get('/getAllMeal/{id}', [MealController::class,'getAllMeal']);
@@ -163,7 +161,6 @@ Route::group([
 
     });
 
-});
 
     Route::group([
         'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin'],
