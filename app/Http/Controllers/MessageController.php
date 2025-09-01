@@ -76,7 +76,7 @@ class MessageController extends Controller
                         'last_name' => $admin->last_name,
                     ],
                     'New Account Request',
-                    "{$data['first_name']} {$data['last_name']}  has requested to change his password.",
+                    "{$data['full_name']}  has requested to change his password.",
                     'messages/requests'
                 );
             }
@@ -289,9 +289,8 @@ class MessageController extends Controller
             ->get();
 
         $dataMessages = $messages->map(function ($message) {
-            return [
-                'data' => $message->data,
-            ];
+            return $message->data
+            ;
         });
 
         return response()->json([

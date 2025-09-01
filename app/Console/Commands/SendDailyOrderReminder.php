@@ -59,7 +59,7 @@ class SendDailyOrderReminder extends Command
                         'last_name'  => $customer->user->last_name,
                     ],
                     'Select Order Reminder',
-                    "Dear {$customer->user->first_name},\nStay healthy and energized 😃! Pick your meal for today and make it a great day 🌮."
+                    "Dear {$customer->user->first_name},Stay healthy and energized 😃! Pick your meal for today and make it a great day 🌮."
                ,'basic'
                     ,'add_order' );
             }

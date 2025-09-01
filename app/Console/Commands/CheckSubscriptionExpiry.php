@@ -60,8 +60,10 @@ class CheckSubscriptionExpiry extends Command
                     'receiver_id' => $user->id,
                     'type' => 'system_notification',
                     'data' => [
-                        'message' => 'We apologize, your service has been suspended due to subscription expiration. Please contact the restaurant to renew your account and continue enjoying our service',
-                        'expiry_date' => $customer->subscription_expiry_date,
+                        'message' => "We apologize, your service has been suspended due to subscription expiration"
+                            ."Please contact the restaurant to renew your account and continue enjoying our service "
+                            ."expiry_date:$customer->subscription_expiry_date",
+                        'date'=>Carbon::now()->toDateTimeString(),
                     ],
                     'status' => 'approved',
                     'event_key' => $eventKey,
@@ -96,7 +98,6 @@ class CheckSubscriptionExpiry extends Command
             $today->copy()->addDays(2)->toDateString(),
             $today->copy()->addDay()->toDateString(),
         ])->get();
-
         $pushController = new PushNotificationController();
 
         foreach ($customers as $customer) {
@@ -115,8 +116,10 @@ class CheckSubscriptionExpiry extends Command
                 'receiver_id' => $customer->user_id,
                 'type' => 'system_notification',
                 'data' => [
-                    'message' => "Your subscription will expire in {$daysLeft} day" .($daysLeft > 1 ? 's' : '') .".Please visit the restaurant to renew and continue enjoying our services ❤",
-                    'expiry_date' => $customer->subscription_expiry_date,
+                    'message' => "Your subscription will expire in {$daysLeft} day" .($daysLeft > 1 ? 's' : '')
+                        .".Please visit the restaurant to renew and continue enjoying our services ❤"
+                        ."expiry_date :$customer->subscription_expiry_date",
+                    'date'=>Carbon::now()->toDateTimeString(),
                 ],
                 'status' => 'approved',
                 'event_key' => $eventKey,

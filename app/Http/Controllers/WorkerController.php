@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use  App\Models\Bag;
 use App\Models\Customer;
+use App\Models\DriverAreaService;
+use App\Models\Message;
 use App\Models\Scan_Log;
 use App\Models\User;
 use App\Services\WhatsAppService;
@@ -85,6 +87,16 @@ class WorkerController extends Controller
                 'data' => []
             ],404);
         }
+        $driverAreaIds=DriverAreaService::where('driver_id',$user->id)->pluck('id')->toArray();
+        $customerAreaId = optional($bag->customer)->area_id;
+
+        if ($customerAreaId && !in_array($customerAreaId, $driverAreaIds)) {
+            return response()->json([
+                'code' => 403,
+                'message' => "You are not allowed to scan this bag because it belongs to another area."
+            ], 403);
+        }
+
 
         if ($request->has('first_name') || $request->has('last_name')) {
             $ownerFirst = strtolower(isset($bag->customer->user->first_name) ? $bag->customer->user->first_name : '');
@@ -124,6 +136,16 @@ class WorkerController extends Controller
                 $bag->last_update_at = 'atWay';
                 $bag->save();
 
+                Message::create([
+                    'sender_id' => null,
+                    'receiver_id' => $customer->id,
+                    'type' => 'system_notification',
+                    'data' => [
+                        'message' =>"Dear {$customer->first_name}, Great news🤩 your bag has left the restaurant and is on its way to your location 🚛📍 "
+                        ,'date'=>Carbon::now()->toDateTimeString(),
+                    ],
+                    'status' => 'approved',
+                ]);
                 $pushController = new PushNotificationController();
                 if ($customer &&$customer->fcm_token) {
                     $pushController->send(
