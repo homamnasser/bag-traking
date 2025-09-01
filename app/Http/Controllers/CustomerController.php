@@ -91,8 +91,8 @@ class CustomerController extends Controller
                 $user->assignRole('customer');
 
                 $subscriptionStartDate = Carbon::now();
-               // $subscriptionExpiryDate = $subscriptionStartDate->copy()->addMonth();
-                $subscriptionExpiryDate = Carbon::today();  //test
+                $subscriptionExpiryDate = $subscriptionStartDate->copy()->addMonth();
+               // $subscriptionExpiryDate = Carbon::today();  //test
 
                 $customer = Customer::create([
                     'user_id' => $user->id,
