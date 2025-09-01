@@ -155,17 +155,17 @@ class OrderController extends Controller
         }
         if ($order->order_date != $today) {
             return response()->json([
-                'code' => 403,
+                'code' => 422,
                 'message' => 'This order cannot be deleted as its date is not today.',
                 'data' => []
-            ], 403);
+            ], 422);
         }
         if ($currentTime->hour >= $limitHour) {
             return response()->json([
-                'code' => 403,
+                'code' => 422,
                 'message' => 'Order cannot be deleted after 2 PM.',
                 'data' => []
-            ], 403);
+            ], 422);
         }
 
 
