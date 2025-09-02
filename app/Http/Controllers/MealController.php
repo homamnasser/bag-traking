@@ -184,10 +184,10 @@ class MealController extends Controller
 
         if ($allMeals->isEmpty()) {
             return response()->json([
-                'code'=>404,
+                'code'=>200,
                 'message' => 'Not Found Meals',
                 'data'=>[]
-            ], 404);
+            ], 200);
         }
         return response()->json([
                 'code' => 200,

@@ -13,6 +13,7 @@ class Message extends Model
         'type',
         'status',
         'data',
+        'event_key'
         ];
 
     protected $casts = [
