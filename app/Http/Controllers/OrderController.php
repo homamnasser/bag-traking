@@ -221,10 +221,10 @@ class OrderController extends Controller
 
         if ($orders->isEmpty()) {
             return response()->json([
-                'code' => 404,
+                'code' => 200,
                 'message' => 'There is no orders yet.',
                 'data' => []
-            ], 404);
+            ], 200);
         }
 
         $myOrders = $orders->map(function ($order) use ($isBeforeTwoPm, $today) {

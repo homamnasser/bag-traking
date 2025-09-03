@@ -294,10 +294,10 @@ class MessageController extends Controller
             ->get();
         if ($messages->isEmpty()) {
             return response()->json([
-                'code' => 404,
+                'code' => 200,
                 'message' => 'There is no message yet.',
                 'data' => []
-            ], 404);
+            ], 200);
         }
         $dataMessages = $messages->map(function ($message) {
             return $message->data;
