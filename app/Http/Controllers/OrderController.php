@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -78,7 +79,7 @@ class OrderController extends Controller
         $order = Order::find($id);
 
         $currentTime = Carbon::now();
-        $limitHour = 14 ;
+        $limitHour = 17 ;
         $today = Carbon::today()->toDateString();
 
         if (!$order) {
@@ -142,7 +143,7 @@ class OrderController extends Controller
     public function deleteOrder($id)
     {
         $currentTime = Carbon::now();
-        $limitHour = 14;
+        $limitHour = 17;
         $order = Order::find($id);
         $today = Carbon::today()->toDateString();
 
