@@ -283,18 +283,29 @@ class MessageController extends Controller
     public function getCustomerNotification()
     {
         $user = Auth::user();
-
-        $messages = Message::where('receiver_id',$user->id)
+        if (!$user) {
+            return response()->json([
+                'code' => 401,
+                'message' => 'Unauthenticated. Please log in.'
+            ], 401);
+        }
+        $messages = Message::where('receiver_id', $user->id)
             ->with('sender')
             ->get();
-
+        if ($messages->isEmpty()) {
+            return response()->json([
+                'code' => 404,
+                'message' => 'There is no message yet.',
+                'data' => []
+            ], 404);
+        }
         $dataMessages = $messages->map(function ($message) {
-            return $message->data
-            ;
+            return $message->data;
         });
 
         return response()->json([
             'code' => 200,
+            'message' => 'This is your messages',
             'data' => $dataMessages
         ], 200);
     }
