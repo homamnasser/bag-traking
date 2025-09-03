@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -78,7 +79,7 @@ class OrderController extends Controller
         $order = Order::find($id);
 
         $currentTime = Carbon::now();
-        $limitHour = 14 ;
+        $limitHour = 17 ;
         $today = Carbon::today()->toDateString();
 
         if (!$order) {
@@ -100,7 +101,7 @@ class OrderController extends Controller
         if ($currentTime->hour >= $limitHour) {
             return response()->json([
                 'code' => 403,
-                'message' => 'Order cannot be updated after 2 PM.',
+                'message' => 'Order cannot be updated after 5 PM.',
                 'data' => []
             ], 403);
         }
@@ -142,7 +143,7 @@ class OrderController extends Controller
     public function deleteOrder($id)
     {
         $currentTime = Carbon::now();
-        $limitHour = 14;
+        $limitHour = 17;
         $order = Order::find($id);
         $today = Carbon::today()->toDateString();
 
@@ -163,7 +164,7 @@ class OrderController extends Controller
         if ($currentTime->hour >= $limitHour) {
             return response()->json([
                 'code' => 422,
-                'message' => 'Order cannot be deleted after 2 PM.',
+                'message' => 'Order cannot be deleted after 5 PM.',
                 'data' => []
             ], 422);
         }
@@ -221,10 +222,10 @@ class OrderController extends Controller
 
         if ($orders->isEmpty()) {
             return response()->json([
-                'code' => 404,
-                'message' => 'There is no orders yet.',
+                'code' => 200,
+                'message' => 'There is no orders  yet.',
                 'data' => []
-            ], 404);
+            ], 200);
         }
 
         $myOrders = $orders->map(function ($order) use ($isBeforeTwoPm, $today) {
@@ -244,7 +245,7 @@ class OrderController extends Controller
             [
                 'code' => 200,
                 'message' => 'Orders ',
-                'result' => $myOrders
+                'data' => $myOrders
 
             ]
             , 200);
