@@ -41,6 +41,7 @@ class SendDailyOrderReminder extends Command
             $this->info('No active customers found today.');
             return Command::SUCCESS;
         }
+        $sentCount = 0;
 
         foreach ($customers as $customer) {
 
@@ -62,11 +63,12 @@ class SendDailyOrderReminder extends Command
                     "Dear {$customer->user->first_name},Stay healthy and energized 😃! Pick your meal for today and make it a great day 🌮."
                ,'basic'
                     ,'add_order' );
+                $sentCount++;
             }
             Cache::put($eventKey, true, now()->endOfDay());
         }
 
-        $this->info("Sent select order reminders to " . count($customers) . " customers.");
+        $this->info("Sent select order reminders to {$sentCount}.  customers.");
         return Command::SUCCESS;
     }
 }

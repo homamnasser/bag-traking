@@ -212,7 +212,7 @@ class MessageController extends Controller
 
         $dataMessages = $messages->map(function ($message) {
             return [
-                'userName' => $message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : null,
+                'userName' =>$message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : 'System',
                 'data' => $message->data,
             ];
         });
@@ -238,10 +238,9 @@ class MessageController extends Controller
                 'message' => 'can not show this message',
             ],422);
         }
-
-        $user=User::find($message->sender_id);
+            $user = User::find($message->sender_id);
        $message=[
-           'userName'=>$user->first_name . ' ' . $user->last_name,
+           'userName'=> $user ? $user->first_name . ' ' . $user->last_name : 'System',
            'data'=>$message->data
           ];
         return response()->json([
@@ -268,7 +267,7 @@ class MessageController extends Controller
 
         $dataMessages = $messages->map(function ($message) {
             return [
-                'userName' => $message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : null,
+                'userName' => $message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : 'System',
                 'data' => $message->data,
             ];
         });

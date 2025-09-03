@@ -28,7 +28,7 @@ class Kernel extends ConsoleKernel
         // جدولة الأمر ليتم تشغيله يومياً في منتصف الليل (أو أي وقت تختاره)
         $schedule->command('subscriptions:check-expiry')->everyMinute();
         $schedule->command('subscriptions:reminder-select-order')->everyMinute();
-        $schedule->command('bags:check-lost')->everyMinute();
+        $schedule->command('Bags:check-missing-bags')->everyMinute();
             //->dailyAt('06:00');
            // ->dailyAt('06:00');
 

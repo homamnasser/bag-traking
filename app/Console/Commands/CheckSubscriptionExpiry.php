@@ -36,10 +36,8 @@ class CheckSubscriptionExpiry extends Command
             ->where('subscription_expiry_date', '<=', Carbon::today())
             ->get();
 
-        if ($expiredCustomers->isEmpty()) {
-            $this->info('No expired subscriptions found today.');
-            return Command::SUCCESS;
-        }
+        if ($expiredCustomers->isNotEmpty()) {
+
         $pushController = new PushNotificationController();
         foreach ($expiredCustomers as $customer) {
 
@@ -82,8 +80,11 @@ class CheckSubscriptionExpiry extends Command
             }
 
         }
+            $this->info("Updated " . count($expiredCustomers) . " expired subscriptions and sent notifications.");
+        } else {
+            $this->info('No expired subscriptions found today.');
+        }
         $this->sendSubscriptionReminders();
-        $this->info("Updated " . count($expiredCustomers) . " expired subscriptions and sent notifications.");
         return Command::SUCCESS;
     }
 
@@ -99,7 +100,7 @@ class CheckSubscriptionExpiry extends Command
             $today->copy()->addDay()->toDateString(),
         ])->get();
         $pushController = new PushNotificationController();
-
+           $count = 0;
         foreach ($customers as $customer) {
             $daysLeft = $today->diffInDays(Carbon::parse($customer->subscription_expiry_date), false);
 
@@ -112,12 +113,13 @@ class CheckSubscriptionExpiry extends Command
             }
 
             Message::create([
+
                 'sender_id' => null,
                 'receiver_id' => $customer->user_id,
                 'type' => 'system_notification',
                 'data' => [
                     'message' => "Your subscription will expire in {$daysLeft} day" .($daysLeft > 1 ? 's' : '')
-                        .".Please visit the restaurant to renew and continue enjoying our services ❤"
+                        .".Please visit the restaurant to renew and continue enjoying our services ❤ "
                         ."expiry_date :$customer->subscription_expiry_date",
                     'date'=>Carbon::now()->toDateTimeString(),
                 ],
@@ -133,10 +135,17 @@ class CheckSubscriptionExpiry extends Command
                         'last_name'  => $customer->user->last_name,
                     ],
                     'Reminder: Your Subscription is Expiring',
-                    "Your subscription will expire in {$daysLeft} day" .($daysLeft > 1 ? 's' : '') .".Please visit the restaurant to renew and continue enjoying our services ❤"
+                    "Your subscription will expire in {$daysLeft} day" .($daysLeft > 1 ? 's' : '') .".Please visit the restaurant to renew and continue enjoying our services ❤ "
                 );
             }
+            $count++;
           }
+
+           if ($count > 0) {
+               $this->info("Reminders sent to {$count} customer(s).");
+           } else {
+               $this->info("No reminders sent today.");
+           }
         }
 
 
