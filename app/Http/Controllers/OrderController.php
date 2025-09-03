@@ -78,7 +78,7 @@ class OrderController extends Controller
         $order = Order::find($id);
 
         $currentTime = Carbon::now();
-        $limitHour = 17 ;
+        $limitHour = 14 ;
         $today = Carbon::today()->toDateString();
 
         if (!$order) {
@@ -142,7 +142,7 @@ class OrderController extends Controller
     public function deleteOrder($id)
     {
         $currentTime = Carbon::now();
-        $limitHour = 17;
+        $limitHour = 14;
         $order = Order::find($id);
         $today = Carbon::today()->toDateString();
 
@@ -244,7 +244,7 @@ class OrderController extends Controller
             [
                 'code' => 200,
                 'message' => 'Orders ',
-                'result' => $myOrders
+                'data' => $myOrders
 
             ]
             , 200);
