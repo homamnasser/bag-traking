@@ -133,9 +133,13 @@ class WorkerController extends Controller
                         'message' =>'Bag status is On the Way. It has already been scanned by the driver.'
                     ],400);
                 }
+                $previousLog = Scan_Log::where('bag_id', $bag->id)
+                    ->latest()
+                    ->first();
+
                 $bag->last_update_at = 'atWay';
                 $bag->save();
-
+                if ($previousLog && $previousLog->status === 'atStore') {
                 Message::create([
                     'sender_id' => null,
                     'receiver_id' => $customer->id,
@@ -158,6 +162,7 @@ class WorkerController extends Controller
                         'Your Bag is on the Way',
                         "Dear {$customer->first_name}, Great news🤩\n your bag has left the restaurant and is on its way to your location 🚛📍 "
                     );
+                }
                 }
                 break;
 
