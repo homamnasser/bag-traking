@@ -159,6 +159,9 @@ class BagController extends Controller
                         $bag->last_update_at = 'atStore';
                     }
                 }
+                else{
+                    $bag->last_update_at = 'atCustomer';
+                }
                 break;
         }
 
