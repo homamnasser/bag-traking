@@ -61,10 +61,20 @@ Route::group([
 ], function ($router) {
     Route::post('/addCustomer', [CustomerController::class,'addCustomer']);
     Route::post('/updateCustomer/{id}', [CustomerController::class,'updateCustomer']);
-    Route::post('/editStatus/{id}', [CustomerController::class,'editStatus']);
     Route::get('/getCustomerByStatus/{is_active}', [CustomerController::class,'getCustomerByStatus']);
     Route::get('/getAllFoodPreferences', [CustomerFoodPreferencesController::class,'getAllFoodPreferences']);
     Route::get('/getCustomer/{id}', [CustomerController::class,'getCustomer']);
+
+
+
+
+});
+Route::group([
+    'middleware' => ['api', 'auth:sanctum', 'role:super_admin|admin|customer'],
+    'prefix' => 'customer'
+], function ($router) {
+    Route::post('/editStatus/{id}', [CustomerController::class,'editStatus']);
+
 
 
 

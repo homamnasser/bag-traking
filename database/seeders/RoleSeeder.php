@@ -146,7 +146,8 @@ class RoleSeeder extends Seeder
             'updateInfoByCustomer',
             'getCustomerNotification',
             'updateInfoByCustomer',
-            'getAllMeal'
+            'getAllMeal',
+            'editStatus'
 
 
         ]);
