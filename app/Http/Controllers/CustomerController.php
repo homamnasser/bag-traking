@@ -25,9 +25,16 @@ class CustomerController extends Controller
             '&last_name=' . urlencode($user->last_name);
 
         $fileName = 'qr_codes/bag_' . $bag->bag_id . '.svg';
+        $filePath = public_path('storage/' . $fileName);
+
+
+        if (!file_exists(dirname($filePath))) {
+            mkdir(dirname($filePath), 0777, true);
+        }
         $qrImage = QrCode::format('svg')->size(300)->generate($qrContent);
-        Storage::disk('public')->put($fileName, $qrImage);
-        $QR = asset('storage/' . $fileName);
+        file_put_contents($filePath, $qrImage);
+
+        $QR = asset('storage/'. $fileName);
 
         $bag->update([
             'qr_code_path' => $fileName,
@@ -242,7 +249,10 @@ class CustomerController extends Controller
                 ],422);
             }
 
-            Storage::disk('public')->delete($oldBag->qr_code_path);
+            $filePath = public_path('storage/' .$oldBag->qr_code_path);
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
             $oldBag->update([
                 'customer_id' => null,
                 'status' => 'available',
