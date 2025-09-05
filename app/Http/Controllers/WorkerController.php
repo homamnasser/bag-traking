@@ -139,7 +139,7 @@ class WorkerController extends Controller
 
                 $bag->last_update_at = 'atWay';
                 $bag->save();
-                if ($previousLog && $previousLog->status === 'atStore') {
+                if (! $previousLog || $previousLog->status === 'atStore') {
                 Message::create([
                     'sender_id' => null,
                     'receiver_id' => $customer->id,
