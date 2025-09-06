@@ -45,7 +45,7 @@ class AdminController extends Controller
             $file = $request->file('image');
             $fileName = 'images/' . 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('images'), $fileName);
-            $image = 'images/' . $fileName;
+            $image= asset( $fileName);
 
         }
 
@@ -69,7 +69,7 @@ class AdminController extends Controller
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'phone' => $user->phone,
                     'role' => $role,
-                   'image'=> $user->image ? asset($user->image) : null,
+                   'image'=> $user->image ,
                 ]
             ],201);
         }
@@ -128,7 +128,7 @@ class AdminController extends Controller
             $file = $request->file('image');
             $fileName = 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('images'), $fileName);
-            $dataToUpdate['image'] = 'images/' . $fileName;
+            $dataToUpdate['image'] = asset( $fileName);
         }
 
         if($request->is_active==0){
@@ -159,7 +159,7 @@ class AdminController extends Controller
                 'phone'=> $user->phone,
                 'role'=> $currentRole,
                 'is_active'  => $user->is_active,
-                'image'=>$user->image ? asset($user->image) : null,
+                'image'=>$user->image ,
             ]
         ],200);
     }
@@ -255,7 +255,7 @@ class AdminController extends Controller
                     'phone'=> $user->phone,
                     'is_active'=>$user->is_active,
                     'role'=> $user->getRoleNames()->first(),
-                    'image'=> $user->image ? asset($user->image) : null,
+                    'image'=> $user->image ,
                 ]
             ],200);
     }
@@ -305,7 +305,7 @@ class AdminController extends Controller
                 'full_name' => $user->first_name . ' ' . $user->last_name,
                 'phone' => $user->phone,
                 'is_active'=>$user->is_active,
-                'image'=> $user->image ? asset($user->image) : null,
+                'image'=> $user->image ,
                 'role' => $user->getRoleNames()->first(),
             ];
         });
@@ -339,7 +339,7 @@ class AdminController extends Controller
                 'phone'=> $user->phone,
                 'email'=>$user->email,
                 'role'=> $user->getRoleNames()->first(),
-                'image'=> $user->image ? asset($user->image) : null,
+                'image'=> $user->image,
             ]
         ],200);
     }
