@@ -44,9 +44,9 @@ class AdminController extends Controller
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             $fileName = 'images/' . 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            Storage::disk('public')->put($fileName, file_get_contents($file));
-            $image = 'storage/' . $fileName;
-            $images=asset($image);
+            $file->move(public_path('images'), $fileName);
+            $image = 'images/' . $fileName;
+
         }
 
 
@@ -56,7 +56,7 @@ class AdminController extends Controller
                 'phone'      => $request->phone,
                 'password'   => Hash::make($request->password),
                 'is_active'  => true,
-                'image' =>$images,
+                'image' =>$image,
 
             ]);
            $user->assignRole($role);
@@ -69,7 +69,7 @@ class AdminController extends Controller
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'phone' => $user->phone,
                     'role' => $role,
-                   'image'=> $images
+                   'image'=> $user->image ? asset($user->image) : null,
                 ]
             ],201);
         }
@@ -127,8 +127,8 @@ class AdminController extends Controller
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             $fileName = 'images_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('images', $fileName, 'public');
-            $dataToUpdate['image'] = asset('storage/' . $path);
+            $file->move(public_path('images'), $fileName);
+            $dataToUpdate['image'] = 'images/' . $fileName;
         }
 
         if($request->is_active==0){
@@ -159,7 +159,7 @@ class AdminController extends Controller
                 'phone'=> $user->phone,
                 'role'=> $currentRole,
                 'is_active'  => $user->is_active,
-                'image'=>$user->image
+                'image'=>$user->image ? asset($user->image) : null,
             ]
         ],200);
     }
@@ -176,8 +176,10 @@ class AdminController extends Controller
                ],404);
            }
            if ($user->image) {
-               $imagePath = str_replace(asset('storage/'), '', $user->image);
-               Storage::disk('public')->delete($imagePath);
+               $imagePath = public_path($user->image);
+               if (file_exists($imagePath)) {
+                   unlink($imagePath);
+               }
 
                $user->update(['image' => null]);
            }
@@ -253,7 +255,7 @@ class AdminController extends Controller
                     'phone'=> $user->phone,
                     'is_active'=>$user->is_active,
                     'role'=> $user->getRoleNames()->first(),
-                    'image'=>$user->image
+                    'image'=> $user->image ? asset($user->image) : null,
                 ]
             ],200);
     }
@@ -303,7 +305,7 @@ class AdminController extends Controller
                 'full_name' => $user->first_name . ' ' . $user->last_name,
                 'phone' => $user->phone,
                 'is_active'=>$user->is_active,
-                'image'=>$user->image,
+                'image'=> $user->image ? asset($user->image) : null,
                 'role' => $user->getRoleNames()->first(),
             ];
         });
@@ -337,7 +339,7 @@ class AdminController extends Controller
                 'phone'=> $user->phone,
                 'email'=>$user->email,
                 'role'=> $user->getRoleNames()->first(),
-                'image'=>$user->image
+                'image'=> $user->image ? asset($user->image) : null,
             ]
         ],200);
     }
