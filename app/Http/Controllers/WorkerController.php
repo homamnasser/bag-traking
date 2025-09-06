@@ -92,9 +92,9 @@ class WorkerController extends Controller
 
         if ($customerAreaId && !in_array($customerAreaId, $driverAreaIds)) {
             return response()->json([
-                'code' => 403,
+                'code' => 422,
                 'message' => "You are not allowed to scan this bag because it belongs to another area."
-            ], 403);
+            ], 422);
         }
 
 
